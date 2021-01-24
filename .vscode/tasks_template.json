@@ -1,0 +1,55 @@
+// VS Code Build Scripts
+//
+// These are shortcuts for command line calls for building
+// or doing other useful "tasks" such as clean or erase.
+//
+// By pressing Ctrl-Shift-B, or Cmd-Shift-B on MacOS, you 
+// will run the default build task shown below. By pressing
+// Ctrl-Shift-P, or Cmd-Shift-P, and typing "Run Task", you 
+// will see the list of all possible tasks below.
+//
+// The "problemMatcher" setting parses build warnings and
+// errors to the problems console.
+//
+// These tasks can become quite sophisticated. You can create
+// your own tasks for common actions. Any command line call
+// can be made, and arguments should be listed in "args".
+//
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Make FPGA Blinky Demo",
+            "command": "make",
+            "args": [
+                "-j4", // For faster builds, set the number to your CPU core count
+                "-C",
+                "examples/fpga-blinky",
+                "fpga-blinky"
+            ],
+            "problemMatcher": "$gcc",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        },
+        {
+            "label": "Clean All",
+            "command": "make",
+            "args": ["-f", "s1.mk", "clean"],
+            "problemMatcher": []
+        },
+        {
+            "label": "Erase",
+            "command": "make",
+            "args": ["-f", "s1.mk", "erase"],
+            "problemMatcher": []
+        },
+        {
+            "label": "Reset",
+            "command": "make",
+            "args": ["-f", "s1.mk", "reset"],
+            "problemMatcher": []
+        }
+    ]
+}

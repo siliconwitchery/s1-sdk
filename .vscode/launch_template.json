@@ -1,0 +1,37 @@
+// VS Code Debug Launch Configuration script.
+//
+// To use this configuration, you will require the
+// "Cortex-Debug" plugin by marus25. Click the extensions
+// tab on the left hand bar, and search for "Cortex-Debug"
+// to install it.
+//
+// Supported are both J-Link and OpenOCD debugging. Below
+// is a sample configuration for J-Link debuggers. You can
+// tweak this file if needed, or enable more configurations
+// by clicking the "Add Configuration" button.
+//
+// Set the "armToolchainPath" to your ARM GCC install
+// executable.
+//
+// To always build before launching, uncomment "preLaunchTask"
+// and set the tast name to whatever you want to build.
+//
+{
+    "configurations": [
+        {
+            "cwd": "${workspaceRoot}",
+            "armToolchainPath": "/Applications/ARM/bin",
+            "executable": "${workspaceFolder}/.build/nrf52811_xxaa.out",
+            "name": "JLink",
+            "request": "launch",
+            "type": "cortex-debug",
+            "servertype": "jlink",
+            "device": "nRF52811_XXAA",
+            "serverArgs": ["-AutoConnect", "1"],
+            "runToMain": true,
+            "svdFile": "${env:HOME}/nRF5SDK/modules/nrfx/mdk/nrf52811.svd",
+            // "preLaunchTask": "Build Basic Demo",
+            "preLaunchCommands": ["load"]
+        }
+    ]
+}
