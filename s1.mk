@@ -13,7 +13,7 @@ $(OUTPUT_DIRECTORY)/nrf52811_xxaa.out: \
 
 # Source files common to all targets
 SRC_FILES += \
-  main.c \
+  $(S1_SDK_ROOT)/s1.c \
   $(SDK_ROOT)/components/libraries/atomic/nrf_atomic.c \
   $(SDK_ROOT)/components/libraries/balloc/nrf_balloc.c \
   $(SDK_ROOT)/components/libraries/memobj/nrf_memobj.c \
