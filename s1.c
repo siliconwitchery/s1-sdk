@@ -1,4 +1,34 @@
 /**
+ * @file  s1.c
+ * @brief S1 Module Core Functions
+ *        
+ *        Various functions to setup and configure the
+ *        S1 Module. To access these functions, use the
+ *        s1.h header file.
+ * 
+ * @attention (c) 2021 Silicon Witchery 
+ *            (info@siliconwitchery.com)
+ *
+ *        Licensed under a Creative Commons Attribution 
+ *        4.0 International License. This code is provided
+ *        as-is and no warranty is given.
+*/
+
+#include <stdbool.h>
+#include <stdint.h>
+#include <string.h>
+#include <math.h>
+
+#include "app_error.h"
+
+#include "nrf_gpio.h"
+#include "nrfx_saadc.h"
+#include "nrfx_spim.h"
+#include "nrfx_twim.h"
+#include "nrf52811.h"
+#include "s1.h"
+
+/**
  * @brief Pinout definition for the nRF52811 chip
  *        on the S1 Module.
  * 
@@ -19,3 +49,31 @@
 
 #define PMIC_SDA_PIN        NRF_GPIO_PIN_MAP(0, 14)
 #define PMIC_SCL_PIN        NRF_GPIO_PIN_MAP(0, 17)
+#define PMIC_ADDRESS        0x48
+
+
+__WEAK int s1_app_setup(void)
+{
+
+};
+
+int main(void)
+{
+    ret_code_t err_code;
+    
+    // Initialize timer module
+    
+    err_code = app_timer_init();
+    APP_ERROR_CHECK(err_code);
+
+    // err_code = nrf_pwr_mgmt_init();
+    // APP_ERROR_CHECK(err_code);
+
+    s1_app_setup();
+
+    for(;;)
+    {
+        // app_sched_execute();
+        // nrf_pwr_mgmt_run();
+    }
+}

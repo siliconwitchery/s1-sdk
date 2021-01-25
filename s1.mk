@@ -1,5 +1,5 @@
 # PROJECT_NAME     := s1_module_test
-TARGETS          := nrf52811_xxaa
+TARGETS          := s1
 OUTPUT_DIRECTORY := .build
 
 ifeq ($(S1_SDK_ROOT),)
@@ -8,17 +8,23 @@ endif
 
 include $(S1_SDK_ROOT)/paths.mk
 
-$(OUTPUT_DIRECTORY)/nrf52811_xxaa.out: \
-  LINKER_SCRIPT  := $(S1_SDK_ROOT)/nrf52811.ld
+$(OUTPUT_DIRECTORY)/s1.out: \
+  LINKER_SCRIPT  := $(S1_SDK_ROOT)/s1.ld
 
 # Source files common to all targets
 SRC_FILES += \
   $(S1_SDK_ROOT)/s1.c \
+  $(SDK_ROOT)/modules/nrfx/mdk/gcc_startup_nrf52811.S \
+  $(SDK_ROOT)/components/libraries/atomic_fifo/nrf_atfifo.c \
   $(SDK_ROOT)/components/libraries/atomic/nrf_atomic.c \
   $(SDK_ROOT)/components/libraries/balloc/nrf_balloc.c \
   $(SDK_ROOT)/components/libraries/memobj/nrf_memobj.c \
   $(SDK_ROOT)/components/libraries/ringbuf/nrf_ringbuf.c \
+  $(SDK_ROOT)/components/libraries/scheduler/app_scheduler.c \
+  $(SDK_ROOT)/components/libraries/sortlist/nrf_sortlist.c \
   $(SDK_ROOT)/components/libraries/strerror/nrf_strerror.c \
+  $(SDK_ROOT)/components/libraries/timer/app_timer2.c \
+  $(SDK_ROOT)/components/libraries/timer/drv_rtc.c \
   $(SDK_ROOT)/components/libraries/util/app_error_handler_gcc.c \
   $(SDK_ROOT)/components/libraries/util/app_error_weak.c \
   $(SDK_ROOT)/components/libraries/util/app_error.c \
@@ -29,11 +35,10 @@ SRC_FILES += \
   $(SDK_ROOT)/external/segger_rtt/SEGGER_RTT_printf.c \
   $(SDK_ROOT)/external/segger_rtt/SEGGER_RTT_Syscalls_GCC.c \
   $(SDK_ROOT)/external/segger_rtt/SEGGER_RTT.c \
+  $(SDK_ROOT)/modules/nrfx/drivers/src/nrfx_clock.c \
   $(SDK_ROOT)/modules/nrfx/drivers/src/nrfx_saadc.c \
   $(SDK_ROOT)/modules/nrfx/drivers/src/nrfx_spim.c \
   $(SDK_ROOT)/modules/nrfx/drivers/src/nrfx_twim.c \
-  $(SDK_ROOT)/modules/nrfx/mdk/gcc_startup_nrf52811.S \
-  $(SDK_ROOT)/modules/nrfx/mdk/gcc_startup_nrf52811.S \
   $(SDK_ROOT)/modules/nrfx/mdk/system_nrf52811.c \
   $(SDK_ROOT)/modules/nrfx/soc/nrfx_atomic.c \
 
@@ -43,6 +48,7 @@ INC_FOLDERS += \
   $(SDK_ROOT)/components \
   $(SDK_ROOT)/components/drivers_nrf/nrf_soc_nosd \
   $(SDK_ROOT)/components/libraries/atomic \
+  $(SDK_ROOT)/components/libraries/atomic_fifo \
   $(SDK_ROOT)/components/libraries/balloc \
   $(SDK_ROOT)/components/libraries/bsp \
   $(SDK_ROOT)/components/libraries/delay \
@@ -51,6 +57,9 @@ INC_FOLDERS += \
   $(SDK_ROOT)/components/libraries/log/src \
   $(SDK_ROOT)/components/libraries/memobj \
   $(SDK_ROOT)/components/libraries/ringbuf \
+  $(SDK_ROOT)/components/libraries/scheduler \
+  $(SDK_ROOT)/components/libraries/sortlist \
+  $(SDK_ROOT)/components/libraries/timer \
   $(SDK_ROOT)/components/libraries/strerror \
   $(SDK_ROOT)/components/libraries/util \
   $(SDK_ROOT)/components/toolchain/cmsis/include \
@@ -71,6 +80,8 @@ OPT += -g3 -Og # Debugging information
 
 # C flags common to all targets
 CFLAGS += $(OPT)
+CFLAGS += -DAPP_TIMER_V2
+CFLAGS += -DAPP_TIMER_V2_RTC1_ENABLED
 CFLAGS += -DFLOAT_ABI_SOFT
 CFLAGS += -DNRF52811_XXAA
 CFLAGS += -DNRFX_COREDEP_DELAY_US_LOOP_CYCLES=3
@@ -86,6 +97,8 @@ CFLAGS += -fno-builtin -fshort-enums
 CXXFLAGS += $(OPT)
 
 # Assembler flags common to all targets
+ASMFLAGS += -DAPP_TIMER_V2
+ASMFLAGS += -DAPP_TIMER_V2_RTC1_ENABLED
 ASMFLAGS += -mcpu=cortex-m4
 ASMFLAGS += -mthumb -mabi=aapcs
 ASMFLAGS += -mfloat-abi=soft
@@ -101,10 +114,10 @@ LDFLAGS += -Wl,--gc-sections # let linker dump unused sections
 LDFLAGS += --specs=nano.specs # use newlib in nano version
 LDFLAGS += -u _printf_float # required to print floats
 
-nrf52811_xxaa: CFLAGS += -D__HEAP_SIZE=2048
-nrf52811_xxaa: CFLAGS += -D__STACK_SIZE=2048
-nrf52811_xxaa: ASMFLAGS += -D__HEAP_SIZE=2048
-nrf52811_xxaa: ASMFLAGS += -D__STACK_SIZE=2048
+s1: CFLAGS += -D__HEAP_SIZE=2048
+s1: CFLAGS += -D__STACK_SIZE=2048
+s1: ASMFLAGS += -D__HEAP_SIZE=2048
+s1: ASMFLAGS += -D__STACK_SIZE=2048
 
 # Add standard libraries at the very end of the linker input, after all objects
 # that may need symbols provided by these libraries.
@@ -121,10 +134,10 @@ $(foreach target, $(TARGETS), $(call define_target, $(target)))
 
 .PHONY: default flash erase reset help
 
-default: nrf52811_xxaa
+default: s1
 
-flash: nrf52811_xxaa
-	nrfjprog -f nrf52 --program $(OUTPUT_DIRECTORY)/nrf52811_xxaa.hex --sectorerase -r
+flash: s1
+	nrfjprog -f nrf52 --program $(OUTPUT_DIRECTORY)/s1.hex --sectorerase -r
 
 erase:
 	nrfjprog -f nrf52 --eraseall

@@ -14,8 +14,10 @@
 # Set the root of the S1 SDK
 S1_SDK_ROOT = ../..
 
+SRC_FILES += $(S1_SDK_ROOT)/examples/fpga-blinky/main.c
+
 # Includes headers from this folder
-INC_FOLDERS += .
+INC_FOLDERS += $(S1_SDK_ROOT)/examples/fpga-blinky
 
 # Include the base s1 makefile. You can also write your own
 include $(S1_SDK_ROOT)/s1.mk
