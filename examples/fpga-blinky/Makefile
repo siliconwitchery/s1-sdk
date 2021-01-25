@@ -22,6 +22,9 @@
 S1_SDK_ROOT := ../..
 include $(S1_SDK_ROOT)/s1.mk
 
+# In this project we always for recomple on main.c to
+# include latest timestamps for __DATE__ and __TIME__.
+$(shell touch main.c)
 
 # Everything below here is the same as an nRF example
 # Makefile. Note that the linker script, and S1 SDK files
@@ -101,7 +104,7 @@ LIB_FILES += \
 
 # Optimization flags
 OPT += -flto # Link time optimisation
-OPT += -g3 -Og # Debugging information
+OPT += -g3 # Debugging information
 
 # C flags common to all targets
 CFLAGS += $(OPT)
@@ -149,9 +152,6 @@ s1-fpga-blinky: ASMFLAGS += -D__STACK_SIZE=2048
 LIB_FILES += -lc -lnosys -lm
 
 TEMPLATE_PATH := $(SDK_ROOT)/components/toolchain/gcc
-
-# Always recomple main.c to include latest __DATE__ and __TIME__ 
-$(shell touch main.c)
 
 include $(TEMPLATE_PATH)/Makefile.common
 

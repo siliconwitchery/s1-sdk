@@ -33,6 +33,7 @@ typedef enum
     STARTED,
     ERASING,
     FLASHING,
+    BOOTING,
     DONE
 } fpga_boot_state_t;
 
@@ -58,89 +59,96 @@ static void fpga_boot_task(void * p_context)
     UNUSED_PARAMETER(p_context);
     switch (fpga_boot_state)
     {
+        // Configure power and erase the flash
         case STARTED:
-            LOG("FPGA boot started.");
-            // Configure power
-            // s1_pimc_fpga_vcore(true);
-            // s1_pmic_set_vio(3.0);
-            // s1_pmic_set_vaux(3.3);
-            // s1_pmic_set_iaux(0.5);
-            // s1_pmic_set_vaux_boost_mode(false);
-
-            // Wake the flash and erase
-            // s1_flash_wake();
-            // s1_flash_erase_all();
+            s1_pimc_fpga_vcore(true);
+            s1_pmic_set_vio(3.0);
+            s1_pmic_set_vaux(3.3);
+            s1_fpga_hold_reset();
+            s1_flash_wakeup();
+            s1_flash_erase_all();
             fpga_boot_state = ERASING;
+            LOG("Erasing flash. Should take about 20 seconds.");
             break;
 
+        // Wait for erase to complete
         case ERASING:
-            LOG("Erasing flash.");
 
-            // If the erase is complete, we start
-            // flashing
-            // if (!s1_flash_is_busy())
+            if (!s1_flash_is_busy())
             {
                 pages_remaining = (uint32_t) ceil((float) fpga_blinky_bin_len / 256.0);
                 fpga_boot_state = FLASHING;
+                LOG("Flashing pages.");
             }
             break;
 
+        // Flash every page until done
         case FLASHING:
             LOG("Flashing.");
-            // if (pages_remaining == 0)
+            if (pages_remaining == 0)
             {
-                fpga_boot_state = DONE;
+                fpga_boot_state = BOOTING;
+                // s1_fpga_boot();
+                LOG("Flashing done.");
                 break;
             }
+
             // if (!s1_flash_is_busy())
             {
                 // s1_flash_page_from_image(0, &fpga_blinky_bin);
             }
             break;
 
-        case DONE:
-            LOG("Starting FPGA.");
+        // Wait for CDONE pin to go high
+        case BOOTING:
+            //if (s1_fpga_booted())
+            {
+                fpga_boot_state = DONE;
+                LOG("FPGA started.");
+            }
+            break;
 
-            // Boot the FPGA and stop this task
-            // s1_fpga_boot();
+        // Stop the task
+        case DONE:
             app_timer_stop(fpga_boot_task_id);
             break;
     }
 }
+
 
 /**
  * @brief Main application entry for the fpga-blinky demo.
  */
 int main(void)
 {
+    // Log some stuff about this project
     LOG_CLEAR();
     LOG("S1 FPGA Blinky Demo – Built: %s %s – SDK Version: %s.",
         __DATE__,
-        __TIME__
+        __TIME__,
         __S1_SDK_VERSION__);
 
-    ret_code_t err_code;
+    // Initialise S1 base setting
+    APP_ERROR_CHECK( s1_init() );
 
-    err_code = app_timer_init();
-    APP_ERROR_CHECK(err_code);
-
-    err_code = nrfx_clock_init(clock_event_handler);
-    APP_ERROR_CHECK(err_code);
+    // Initialise LFXO required by the App Timer
+    APP_ERROR_CHECK( nrfx_clock_init(clock_event_handler) );
     nrfx_clock_lfclk_start();
 
+    // Initialise the App Timer
+    APP_ERROR_CHECK( app_timer_init() );
     APP_SCHED_INIT(sizeof(uint32_t), 5);
 
-    err_code = app_timer_create(&fpga_boot_task_id,
-                                APP_TIMER_MODE_REPEATED,
-                                fpga_boot_task);
-    APP_ERROR_CHECK(err_code);
+    // Create and start a timer for the FPGA flash/boot task
+    APP_ERROR_CHECK( app_timer_create(&fpga_boot_task_id,
+                                      APP_TIMER_MODE_REPEATED,
+                                      fpga_boot_task) ); 
 
-    err_code = app_timer_start(fpga_boot_task_id, 
-                               APP_TIMER_TICKS(2000),
-                               NULL);
+    APP_ERROR_CHECK( app_timer_start(fpga_boot_task_id, 
+                                     APP_TIMER_TICKS(200), // 200mS
+                                     NULL) );
 
-    APP_ERROR_CHECK(err_code);
-
+    // The CPU is free to do nothing in the meanwhile
     for(;;)
     {
         __WFI();

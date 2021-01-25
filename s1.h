@@ -16,7 +16,6 @@
 
 #ifndef _S1_H_
 #define _S1_H_
-/*******************************************************/
 
 #include "SEGGER_RTT.h"
 #include "sdk_config.h"
@@ -26,6 +25,30 @@
  */
 #define __S1_SDK_VERSION__ "0.1"
 
+/**
+ * @brief Typedef describing possible error conditions.
+ *        S1_SUCCESS means the operation was okay. Can
+ *        be used with the nRF APP_ERROR_CHECK() macro.
+ */
+typedef enum
+{
+    S1_SUCCESS = 0,
+    S1_PMIC_ERROR,
+    S1_FLASH_ERROR,
+    S1_INVALID_SETTING,
+} s1_error_t;
+
+/**
+ * @brief S1 first initialisation. Sets up commuication
+ *        between the internal ICs and configures GPIO
+ *        required for configuring the FPGA. Always run
+ *        this at the start of your application. Doesn't
+ *        change any PMIC settings so can be called from
+ *        a deep sleep wakeup to reconfigure the IO.
+ * 
+ * @returns S1_SUCCESS if okay. Error otherwise.
+ */
+s1_error_t s1_init(void);
 
 
 /*******************************************************
@@ -44,21 +67,21 @@
  *        mode, and Vaux is set to a value greater than
  *        3.46V. This is to protect the FPGA.
  * 
- * @retval true if successful, false otherwise
+ * @returns S1_SUCCESS if okay. Error otherwise.
  */
-bool s1_pmic_set_vaux(float voltage);
+s1_error_t s1_pmic_set_vaux(float voltage);
 
 /**
  * @brief Set Vio voltage. Can be set from 0.8V to 
- *        3.975V in 25mV steps. 
+ *        3.46V in 25mV steps. 
  * 
  * @param voltage: Voltage level. Automatically rounded
  *                 to the nearest 25mV. A value of 0V
  *                 shuts down the rail.
  * 
- * @retval true if successful, false otherwise
+ * @returns S1_SUCCESS if okay. Error otherwise.
  */
-bool s1_pmic_set_vio(float voltage);
+s1_error_t s1_pmic_set_vio(float voltage);
 
 /**
  * @brief Switches Vio between Low Dropout Regulator mode
@@ -72,9 +95,9 @@ bool s1_pmic_set_vio(float voltage);
  * @param enable: True enables load switch mode, false
  *                switches back to regulated mode.
  * 
- * @retval true if successful, false otherwise
+ * @returns S1_SUCCESS if okay. Error otherwise.
  */
-bool s1_pmic_set_vio_lsw(bool enable);
+s1_error_t s1_pmic_set_vio_lsw(bool enable);
 
 /**
  * @brief Set Vio voltage. Can be set from 1.7V to 
@@ -83,17 +106,53 @@ bool s1_pmic_set_vio_lsw(bool enable);
  * @param voltage: Voltage level. Automatically rounded
  *                 to the nearest 50mV.
  * 
- * @retval true if successful, false otherwise
+ * @returns S1_SUCCESS if okay. Error otherwise.
  */
-bool s1_pmic_set_vadc(float voltage);
+s1_error_t s1_pmic_set_vadc(float voltage);
 
 /**
- * @brief Enable FPGA core and FPGA PLL voltage to 1.2V.
+ * @brief Enable FPGA core and FPGA PLL voltages to 1.2V.
+ *        Disabling also shuts down Vio
  *
  * @param enable: Enable the core voltage.
  */
 void s1_pimc_fpga_vcore(bool enable);
 
+
+/*******************************************************
+ * Flash related APIs
+ *******************************************************/
+
+/**
+ * @brief Wakes up the flash if it's asleep.
+ * 
+ * @return S1_SUCCESS if okay, or S1_FLASH_ERROR if the
+ *         chip isn't responding correctly.
+ */
+s1_error_t s1_flash_wakeup(void);
+
+/**
+ * @brief Fully erases the flash chip.
+ */
+void s1_flash_erase_all(void);
+
+/**
+ * @brief Check if the flash is busy.
+ * 
+ * @returns true if busy.
+ */
+bool s1_flash_is_busy(void);
+
+
+/*******************************************************
+ * Flash related APIs
+ *******************************************************/
+
+/**
+ * @brief Puts the FPGA into reset. Reccomended to wait
+ *        200uS before a subsequent flash/fpga operation.
+ */
+void s1_fpga_hold_reset(void);
 
 /*******************************************************
  * Basic Logging Macros
@@ -158,5 +217,4 @@ void s1_pimc_fpga_vcore(bool enable);
 #define s1_app_assert() do{__asm__("BKPT"); while(1);}while(0);
 
 
-/*******************************************************/
 #endif
