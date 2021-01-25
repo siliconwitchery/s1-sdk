@@ -1,8 +1,8 @@
 # S1 Software Development Kit
 
-The S1 Module is Bluetooth/FPGA module based on the Nordic [nRF52811 chip](https://www.nordicsemi.com/Products/Low-power-short-range-wireless/nRF52811). This Software Development Kit is based around Nordic's SDK for the nRF chips. It's intended to let you quickly configure the S1, while letting you easily work with Nordic's existing SDK and libraries.
+The **S1 System-on-Module** is a tiny Bluetooth and FPGA module based on the Nordic [nRF52811 chip](https://www.nordicsemi.com/Products/Low-power-short-range-wireless/nRF52811) and Lattice [iCE40 FPGA](https://www.latticesemi.com/en/Products/FPGAandCPLD/iCE40UltraPlus). This lightweight software development kit is intended to let you quickly configure the S1, while letting you easily work with Nordic's existing SDK and libraries.
 
-**WARNING:** Be careful if you decide to access S1 core devices outside the provided APIs. The Power Management IC is capable of outputting high voltages, and misconfiguration may destroy the devices on the S1.
+**WARNING: Be careful if you decide to access the S1's core devices outside the provided APIs. The Power Management IC is capable of outputting high voltages, and misconfiguration may destroy the devices on the S1.**
 
 ## Getting started
 
@@ -26,9 +26,9 @@ The S1 Module is Bluetooth/FPGA module based on the Nordic [nRF52811 chip](https
 
 Optionally Install the [J-Link Software Pack](https://www.segger.com/downloads/jlink/#J-LinkSoftwareAndDocumentationPack) if you want the latest tools, though the Nordic command line tools already comes bundled with them.
 
-### Setup the project:
+### Setup the SDK:
 
-1. Download or [clone](https://docs.github.com/en/github/creating-cloning-and-archiving-repositories/cloning-a-repository) the S1 SDK by running `git clone https://github.com/siliconwitchery/s1-sdk.git` from the terminal.
+1. Download this SDK. *Or clone it by running `git clone https://github.com/siliconwitchery/s1-sdk.git` from your terminal.*
 
 1. Duplicate `paths_template.mk` and rename it to `paths.mk`.
 
@@ -70,7 +70,7 @@ The .vscode folder contains some handy build and debugging scripts if you decide
 
 1. Press **Ctrl-Shift-B** (**Cmd-Shift-B** on MacOS) to build the test project.
 
-1. It should build successfully. Check the terminal output to solve the error.
+1. It should build successfully, otherwise check the terminal output to solve any errors.
 
 ## Running on Hardware
 
@@ -84,7 +84,7 @@ The .vscode folder contains some handy build and debugging scripts if you decide
 
 ### Wire it up:
 
-![](Diagram of S1 Popout with nRF52DK)
+![Diagram of S1 Popout with nRF52DK]()
 
 ### Debug:
 
@@ -115,12 +115,10 @@ Logging is enabled by default. To read the logs you can use:
 
 ## Project Structure
 
-The S1 SDK contains minimal files for configuring the S1 Module peripherals. Outside of that you're free to use the Nordic SDK examples. Each example in the S1 SDK is closely based around a nordic example. By including `s1.mk` at the top of your own project's makefile, you will have access to the S1 configuration APIs.
-
-Include `#include "s1.h"` in your own `main.c` file to access the S1 API.
+The S1 SDK contains minimal files and an API header for configuring the S1 Module peripherals. Outside of that you're free to use the Nordic APIs directly. Each example in the S1 SDK is closely based around a Nordic SDK example. By including `s1.mk` at the top of your project's `Makefile`, and `s1.h` in your `main.c` file, you will have access to the S1 configuration APIs.
 
 Be sure to pull this repository occasionally to receive bugfixes and updated features.
 
-## Help out
+## Give us feedback
 
-As this is a new project, we'd love for those using the S1 to let us know of any bugs or improvement you think of. File them on the [GitHub issue tab](https://github.com/siliconwitchery/s1-sdk/issues).
+As this is a new project, we'd love for those using the S1 to let us know of any bugs or ideas for improvement. File them on the [GitHub issue tab](https://github.com/siliconwitchery/s1-sdk/issues).
