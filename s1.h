@@ -39,7 +39,7 @@ typedef enum
 } s1_error_t;
 
 /**
- * @brief S1 first initialisation. Sets up commuication
+ * @brief S1 first initialisation. Sets up communication
  *        between the internal ICs and configures GPIO
  *        required for configuring the FPGA. Always run
  *        this at the start of your application. Doesn't
