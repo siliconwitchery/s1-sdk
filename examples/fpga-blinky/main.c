@@ -15,16 +15,18 @@
  *        as-is and no warranty is given.
 */
 
-#include "nrf52811.h"
+#include "app_scheduler.h"
+#include "app_timer.h"
+#include "fpga_blinky_bin.h"
 #include "nrf_gpio.h"
+#include "nrf52811.h"
+#include "nrfx_clock.h"
 #include "nrfx_saadc.h"
 #include "nrfx_spim.h"
 #include "nrfx_twim.h"
-#include "app_scheduler.h"
 #include "s1.h"
-#include "fpga_blinky_bin.h"
 
-S1_TASK_DEF(fpga_boot_task_id);
+APP_TIMER_DEF(fpga_boot_task_id);
 
 typedef enum 
 {
@@ -37,13 +39,27 @@ typedef enum
 static fpga_boot_state_t fpga_boot_state = STARTED;
 static uint32_t pages_remaining;
 
+
+/**
+ * @brief Clock event callback. Not used but required to have.
+ */
+void clock_event_handler(nrfx_clock_evt_type_t event){}
+
+
+/**
+ * @brief Timer based state machine for flashing the FPGA
+ *        image and booting the FPGA. As some of the flash
+ *        operations take a lot of time, using a timer based
+ *        state machine avoids the main thread hanging while
+ *        waiting for flash operations to complete.
+ */
 static void fpga_boot_task(void * p_context)
 {
     UNUSED_PARAMETER(p_context);
     switch (fpga_boot_state)
     {
         case STARTED:
-            LOG("FPGA boot started.\n");
+            LOG("FPGA boot started.");
             // Configure power
             // s1_pimc_fpga_vcore(true);
             // s1_pmic_set_vio(3.0);
@@ -58,7 +74,7 @@ static void fpga_boot_task(void * p_context)
             break;
 
         case ERASING:
-            LOG("Erasing flash.\n");
+            LOG("Erasing flash.");
 
             // If the erase is complete, we start
             // flashing
@@ -70,7 +86,7 @@ static void fpga_boot_task(void * p_context)
             break;
 
         case FLASHING:
-            LOG("Flashing.\n");
+            LOG("Flashing.");
             // if (pages_remaining == 0)
             {
                 fpga_boot_state = DONE;
@@ -83,7 +99,7 @@ static void fpga_boot_task(void * p_context)
             break;
 
         case DONE:
-            LOG("Starting FPGA.\n");
+            LOG("Starting FPGA.");
 
             // Boot the FPGA and stop this task
             // s1_fpga_boot();
@@ -92,18 +108,21 @@ static void fpga_boot_task(void * p_context)
     }
 }
 
-#include "nrfx_clock.h"
-void clock_event_handler(nrfx_clock_evt_type_t event)
-{
-}
-
-int s1_app_setup(void)
+/**
+ * @brief Main application entry for the fpga-blinky demo.
+ */
+int main(void)
 {
     LOG_CLEAR();
-    LOG("S1 FPGA Blinky Example.\r\n");
-    LOG("Built: %s %s – SDK Version: %s\r\n", __DATE__, __TIME__, __S1_SDK_VERSION__);
+    LOG("S1 FPGA Blinky Demo – Built: %s %s – SDK Version: %s.",
+        __DATE__,
+        __TIME__
+        __S1_SDK_VERSION__);
 
     ret_code_t err_code;
+
+    err_code = app_timer_init();
+    APP_ERROR_CHECK(err_code);
 
     err_code = nrfx_clock_init(clock_event_handler);
     APP_ERROR_CHECK(err_code);
@@ -121,4 +140,9 @@ int s1_app_setup(void)
                                NULL);
 
     APP_ERROR_CHECK(err_code);
+
+    for(;;)
+    {
+        __WFI();
+    }
 }

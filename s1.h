@@ -20,7 +20,6 @@
 
 #include "SEGGER_RTT.h"
 #include "sdk_config.h"
-#include "app_timer.h"
 
 /**
  * @brief Release version of this SDK
@@ -28,13 +27,6 @@
 #define __S1_SDK_VERSION__ "0.1"
 
 
-/*******************************************************
- * Task Scheduler APIs
- *******************************************************/
-
-#define S1_TASK_DEF(timer_id) APP_TIMER_DEF(timer_id)
-
-int s1_app_setup(void);
 
 /*******************************************************
  * Power related APIs
@@ -104,8 +96,20 @@ void s1_pimc_fpga_vcore(bool enable);
 
 
 /*******************************************************
- * Logging Macros
+ * Basic Logging Macros
  *******************************************************/
+
+/**
+ * @brief Clears the terminal screen of any previous logs.
+ */ 
+#define LOG_CLEAR() SEGGER_RTT_printf(0, RTT_CTRL_CLEAR "\r");
+
+/**
+ * @brief The same logging macro as LOG_RAW, but with
+ * "\r\n" appended at the start.
+ */
+
+#define LOG(format, ...) LOG_RAW("\r\n" format, ##__VA_ARGS__)
 
 /**
  * @brief Logging macro which outputs printf style logs
@@ -124,15 +128,13 @@ void s1_pimc_fpga_vcore(bool enable);
  * @param format: printf style format string
  * @param ...: Variadic argument list for printf data
  */
-#define LOG(format, ...) do {char _debug_log_buffer[SEGGER_RTT_CONFIG_BUFFER_SIZE_UP-1] = ""; \
-                snprintf(_debug_log_buffer, SEGGER_RTT_CONFIG_BUFFER_SIZE_UP-1, format, ##__VA_ARGS__); \
-                SEGGER_RTT_Write(0, _debug_log_buffer, strnlen(_debug_log_buffer, SEGGER_RTT_CONFIG_BUFFER_SIZE_UP)); \
-                } while(0)
-
-/**
- * @brief Clears the terminal screen of any previous logs.
- */ 
-#define LOG_CLEAR() SEGGER_RTT_printf(0, RTT_CTRL_CLEAR "\r");
+#define LOG_RAW(format, ...)                                                                                    \
+    do                                                                                                          \
+    {                                                                                                           \
+        char _debug_log_buffer[SEGGER_RTT_CONFIG_BUFFER_SIZE_UP-1] = "";                                        \
+        snprintf(_debug_log_buffer, SEGGER_RTT_CONFIG_BUFFER_SIZE_UP-1, format, ##__VA_ARGS__);                 \
+        SEGGER_RTT_Write(0, _debug_log_buffer, strnlen(_debug_log_buffer, SEGGER_RTT_CONFIG_BUFFER_SIZE_UP));   \
+    } while(0)
 
 
 /*******************************************************

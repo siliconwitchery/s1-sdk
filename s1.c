@@ -50,30 +50,3 @@
 #define PMIC_SDA_PIN        NRF_GPIO_PIN_MAP(0, 14)
 #define PMIC_SCL_PIN        NRF_GPIO_PIN_MAP(0, 17)
 #define PMIC_ADDRESS        0x48
-
-
-__WEAK int s1_app_setup(void)
-{
-
-};
-
-int main(void)
-{
-    ret_code_t err_code;
-    
-    // Initialize timer module
-    
-    err_code = app_timer_init();
-    APP_ERROR_CHECK(err_code);
-
-    // err_code = nrf_pwr_mgmt_init();
-    // APP_ERROR_CHECK(err_code);
-
-    s1_app_setup();
-
-    for(;;)
-    {
-        // app_sched_execute();
-        // nrf_pwr_mgmt_run();
-    }
-}
