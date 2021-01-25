@@ -143,6 +143,17 @@ void s1_flash_erase_all(void);
  */
 bool s1_flash_is_busy(void);
 
+/**
+ * @brief Flashes a page at offset address to the flash.
+ * 
+ * @param offset: Page offset to flash
+ * @param image: 
+ * 
+ * @returns true if busy.
+ */
+s1_error_t s1_flash_page_from_image(uint32_t offset,
+                                    unsigned char * image);
+
 
 /*******************************************************
  * Flash related APIs

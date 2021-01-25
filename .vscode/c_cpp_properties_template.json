@@ -21,7 +21,10 @@
         "name": "ARM",
         "includePath": [
             "${workspaceFolder}/**",
-            "${env:HOME}/nRF5SDK/**"
+            "${env:HOME}/nRF5SDK/components/**",
+            "${env:HOME}/nRF5SDK/external/**",
+            "${env:HOME}/nRF5SDK/integration/**",
+            "${env:HOME}/nRF5SDK/modules/**"
         ],
         "defines": [
             "\"__STATIC_INLINE=static inline\""

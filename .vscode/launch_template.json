@@ -5,23 +5,20 @@
 // tab on the left hand bar, and search for "Cortex-Debug"
 // to install it.
 //
-// Supported are both J-Link and OpenOCD debugging. Below
-// is a sample configuration for J-Link debuggers. You can
-// tweak this file if needed, or enable more configurations
-// by clicking the "Add Configuration" button.
+// Be sure to set the "armToolchainPath" to the your ARM
+// GCC install folder.
 //
-// Set the "armToolchainPath" to your ARM GCC install
-// executable.
-//
-// To always build before launching, uncomment "preLaunchTask"
-// and set the tast name to whatever you want to build.
-//
+// Supported are both J-Link and OpenOCD debugging. Here
+// the default launch uses J-Link with the fpga-blinky 
+// example. Modify "executable" and "preLaunchTask" for
+// your own project.
+
 {
     "configurations": [
         {
             "cwd": "${workspaceRoot}",
             "armToolchainPath": "/Applications/ARM/bin",
-            "executable": "${workspaceFolder}/.build/nrf52811_xxaa.out",
+            "executable": "${workspaceFolder}/examples/fpga-blinky/.build/s1-fpga-blinky.out",
             "name": "JLink",
             "request": "launch",
             "type": "cortex-debug",
@@ -30,7 +27,7 @@
             "serverArgs": ["-AutoConnect", "1"],
             "runToMain": true,
             "svdFile": "${env:HOME}/nRF5SDK/modules/nrfx/mdk/nrf52811.svd",
-            // "preLaunchTask": "Build Basic Demo",
+            "preLaunchTask": "Make fpga-blinky",
             "preLaunchCommands": ["load"]
         }
     ]

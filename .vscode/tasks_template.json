@@ -1,31 +1,27 @@
 // VS Code Build Scripts
 //
 // These are shortcuts for command line calls for building
-// or doing other useful "tasks" such as clean or erase.
+// or doing other useful "tasks" such as clean or erasinig.
 //
 // By pressing Ctrl-Shift-B, or Cmd-Shift-B on MacOS, you 
-// will run the default build task shown below. By pressing
+// will run the default make task shown below. By pressing
 // Ctrl-Shift-P, or Cmd-Shift-P, and typing "Run Task", you 
-// will see the list of all possible tasks below.
+// can select other tasks.
 //
-// The "problemMatcher" setting parses build warnings and
-// errors to the problems console.
-//
-// These tasks can become quite sophisticated. You can create
-// your own tasks for common actions. Any command line call
-// can be made, and arguments should be listed in "args".
-//
+// By default, these tasks build the fpga-blinky example.
+// Modify these for your own project.
+
 {
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "Make FPGA Blinky Demo",
+            "label": "Make and flash fpga-blinky",
             "command": "make",
             "args": [
                 "-j4", // For faster builds, set the number to your CPU core count
                 "-C",
                 "examples/fpga-blinky",
-                "fpga-blinky"
+                "flash"
             ],
             "problemMatcher": "$gcc",
             "group": {
@@ -34,21 +30,53 @@
             }
         },
         {
-            "label": "Clean All",
+            "label": "Make fpga-blinky",
             "command": "make",
-            "args": ["-f", "s1.mk", "clean"],
+            "args": [
+                "-j4", // For faster builds, set the number to your CPU core count
+                "-C",
+                "examples/fpga-blinky"
+            ],
+            "problemMatcher": "$gcc",
+        },
+        {
+            "label": "Build verilog project",
+            "command": "make",
+            "args": [
+                "-C",
+                "examples/fpga-blinky",
+                "build-verilog"
+            ],
+            "problemMatcher": []
+        },
+        {
+            "label": "Clean",
+            "command": "make",
+            "args": [
+                "-C",
+                "examples/fpga-blinky",
+                "clean"
+            ],
             "problemMatcher": []
         },
         {
             "label": "Erase",
             "command": "make",
-            "args": ["-f", "s1.mk", "erase"],
+            "args": [
+                "-C",
+                "examples/fpga-blinky",
+                "erase"
+            ],
             "problemMatcher": []
         },
         {
             "label": "Reset",
             "command": "make",
-            "args": ["-f", "s1.mk", "reset"],
+            "args": [
+                "-C",
+                "examples/fpga-blinky",
+                "reset"
+            ],
             "problemMatcher": []
         }
     ]

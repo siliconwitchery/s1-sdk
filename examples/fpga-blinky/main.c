@@ -4,9 +4,8 @@
  *        
  *        Includes basic configuration of the S1 module,
  *        and operations required to boot the FPGA. The
- *        fpga-blinky.v file should be build and binary
- *        turned into a header file containing the FPGA
- *        boot image. The Makefile shows how to do this.
+ *        FPGA verilog project can be built by running
+ *        "make build-verilog" from this folder.
  * 
  * @attention (c) 2021 Silicon Witchery (info@siliconwitchery.com)
  *
@@ -68,12 +67,11 @@ static void fpga_boot_task(void * p_context)
             s1_flash_wakeup();
             s1_flash_erase_all();
             fpga_boot_state = ERASING;
-            LOG("Erasing flash. Should take about 20 seconds.");
+            LOG("Erasing flash. Takes up to 80 seconds.");
             break;
 
         // Wait for erase to complete
         case ERASING:
-
             if (!s1_flash_is_busy())
             {
                 pages_remaining = (uint32_t) ceil((float) fpga_blinky_bin_len / 256.0);
@@ -84,7 +82,12 @@ static void fpga_boot_task(void * p_context)
 
         // Flash every page until done
         case FLASHING:
-            LOG("Flashing.");
+            if (!s1_flash_is_busy())
+            {
+                s1_flash_page_from_image(0, &fpga_blinky_bin);
+                pages_remaining--;
+            }
+            
             if (pages_remaining == 0)
             {
                 fpga_boot_state = BOOTING;
@@ -92,25 +95,18 @@ static void fpga_boot_task(void * p_context)
                 LOG("Flashing done.");
                 break;
             }
-
-            // if (!s1_flash_is_busy())
-            {
-                // s1_flash_page_from_image(0, &fpga_blinky_bin);
-            }
             break;
 
-        // Wait for CDONE pin to go high
+        // Wait for CDONE pin to go high then stop the task
+        // and put the flash into deep sleep.
         case BOOTING:
             //if (s1_fpga_booted())
             {
+                //s1_flash_deep_sleep();
+                app_timer_stop(fpga_boot_task_id);
                 fpga_boot_state = DONE;
                 LOG("FPGA started.");
             }
-            break;
-
-        // Stop the task
-        case DONE:
-            app_timer_stop(fpga_boot_task_id);
             break;
     }
 }
@@ -145,7 +141,7 @@ int main(void)
                                       fpga_boot_task) ); 
 
     APP_ERROR_CHECK( app_timer_start(fpga_boot_task_id, 
-                                     APP_TIMER_TICKS(200), // 200mS
+                                     APP_TIMER_TICKS(5),
                                      NULL) );
 
     // The CPU is free to do nothing in the meanwhile

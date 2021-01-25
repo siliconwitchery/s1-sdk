@@ -182,7 +182,8 @@ s1_error_t s1_flash_wakeup(void)
 {
     // Wake up the flash
     uint8_t wake_seq[4] = {0xAB, 0, 0, 0};
-    flash_tx_rx((uint8_t*)&wake_seq, 4, NULL, 0);
+    uint8_t wake_res[5] = {0};
+    flash_tx_rx((uint8_t*)&wake_seq, 4, (uint8_t*)&wake_res, 5);
     NRFX_DELAY_US(3); // tRES1 required to come out of sleep
 
     // Reset sequence has to happen as two transfers
@@ -196,7 +197,6 @@ s1_error_t s1_flash_wakeup(void)
     uint8_t cap_id_res[4] = {0};
     flash_tx_rx((uint8_t*)&cap_id_reg, 1, (uint8_t*)&cap_id_res, 4);
 
-    LOG("Flash capacity = 0x%x", cap_id_res[3]); //should be 0x16
     if (cap_id_res[3] != 0x16)
     {
         return S1_FLASH_ERROR;
@@ -220,16 +220,18 @@ bool s1_flash_is_busy(void)
     uint8_t status_res[2] = {0};
     flash_tx_rx((uint8_t*)&status_reg, 1, (uint8_t*)&status_res, 2);
 
-    // LSB of 0x05 register should clear once done
-    LOG("Status: 0x%x", status_res[1]);
-
     if (!(status_res[1] & 0x01))
     {
-        LOG("Erase Done!");
         return false;
     }
 
     return true;
+}
+
+s1_error_t s1_flash_page_from_image(uint32_t offset,
+                                    unsigned char * image)
+{
+
 }
 
 void s1_fpga_hold_reset(void)
