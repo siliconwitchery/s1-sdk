@@ -17,3 +17,5 @@ The example is self documented. Important files are:
 ## Building
 
 To build the verilog project, run `make -C examples/fpga-blinky build-verilog` from the `s1-sdk` root folder.
+
+To build the nRF project, run `make -C examples/fpga-blinky` from the `s1-sdk` root folder.
