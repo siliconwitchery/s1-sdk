@@ -14,4 +14,6 @@ The example is self documented. Important files are:
 - `fpga_blinky.v` – Verilog code for blinking an LED.
 - `Makefile` – Project makefile with build configuration.
 
-##
+## Building
+
+To build the verilog project, run `make -C examples/fpga-blinky build-verilog` from the `s1-sdk` root folder.
