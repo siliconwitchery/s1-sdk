@@ -1,0 +1,17 @@
+# FPGA Blinky Example.
+
+This example demonstrates how to configure the FPGA on the S1 Module. The operations are:
+
+1. Initialise the S1
+1. Set IO and FPGA voltages
+1. Erase the flash
+1. Program the flash
+1. Hand SPI control to FPGA and let it boot
+
+The example is self documented. Important files are:
+
+- `main.c` – Main nRF52 application for doing the above.
+- `fpga_blinky.v` – Verilog code for blinking an LED.
+- `Makefile` – Project makefile with build configuration.
+
+##
