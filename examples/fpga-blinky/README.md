@@ -15,7 +15,8 @@ On power up, the following operations take place. The process of erasing and fla
 The example is self documented. See how it works by studying the files:
 
 - `main.c` – Main nRF52 application running the above tasks.
-- `fpga_blinky.v` – Verilog code for blinking the D3 pin.
+- `fpga-blinky.v` – Verilog code for blinking the D3 pin.
+- `fpga-blinky.pcf` – Pin configuration file for the FPGA.
 - `fpga_blink_bin.h` – The complied FPGA binary. If you modify the FPGA project, you should run `make build-verilog` to recreate it.
 - `Makefile` – Project makefile with build configuration.
 

@@ -6,11 +6,8 @@
     as-is and no warrenty is given.
 
     Description:
-     A simple test program to cycle all fpga pins
-     though a 7 bit counter. When D4 is high the
-     counter will run and pins will toggle.
-
-     It uses the internal HF oscillator.
+     A simple test program to toggle D3 using the
+     internal HF oscillator.
 */
 
 module top (
