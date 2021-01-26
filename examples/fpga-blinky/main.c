@@ -14,6 +14,7 @@
  *        as-is and no warranty is given.
 */
 
+#include <math.h>
 #include "app_scheduler.h"
 #include "app_timer.h"
 #include "fpga_blinky_bin.h"
@@ -38,7 +39,7 @@ typedef enum
 
 static fpga_boot_state_t fpga_boot_state = STARTED;
 static uint32_t pages_remaining;
-
+static uint32_t page_address = 0x000000;
 
 /**
  * @brief Clock event callback. Not used but required to have.
@@ -61,7 +62,7 @@ static void fpga_boot_task(void * p_context)
         // Configure power and erase the flash
         case STARTED:
             s1_pimc_fpga_vcore(true);
-            s1_pmic_set_vio(3.0);
+            s1_pmic_set_vio(2.8);
             s1_pmic_set_vaux(3.3);
             s1_fpga_hold_reset();
             s1_flash_wakeup();
@@ -76,7 +77,7 @@ static void fpga_boot_task(void * p_context)
             {
                 pages_remaining = (uint32_t) ceil((float) fpga_blinky_bin_len / 256.0);
                 fpga_boot_state = FLASHING;
-                LOG("Flashing pages.");
+                LOG("Flashing %d pages.", pages_remaining);
             }
             break;
 
@@ -84,25 +85,24 @@ static void fpga_boot_task(void * p_context)
         case FLASHING:
             if (!s1_flash_is_busy())
             {
-                s1_flash_page_from_image(0, &fpga_blinky_bin);
+                s1_flash_page_from_image(page_address, &fpga_blinky_bin);
                 pages_remaining--;
+                page_address+= 0x100;
             }
             
             if (pages_remaining == 0)
             {
                 fpga_boot_state = BOOTING;
-                // s1_fpga_boot();
+                s1_fpga_boot();
                 LOG("Flashing done.");
                 break;
             }
             break;
 
         // Wait for CDONE pin to go high then stop the task
-        // and put the flash into deep sleep.
         case BOOTING:
-            //if (s1_fpga_booted())
+            if (s1_fpga_is_booted())
             {
-                //s1_flash_deep_sleep();
                 app_timer_stop(fpga_boot_task_id);
                 fpga_boot_state = DONE;
                 LOG("FPGA started.");

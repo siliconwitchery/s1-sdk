@@ -165,6 +165,14 @@ s1_error_t s1_flash_page_from_image(uint32_t offset,
  */
 void s1_fpga_hold_reset(void);
 
+/**
+ * @brief Passes SPI control to the flash, and releases
+ *        the FPGA reset to allow it to boot.
+ */
+void s1_fpga_boot(void);
+
+bool s1_fpga_is_booted(void);
+
 /*******************************************************
  * Basic Logging Macros
  *******************************************************/

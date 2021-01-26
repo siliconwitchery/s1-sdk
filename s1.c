@@ -59,7 +59,14 @@ static uint8_t pmic_read_reg(uint8_t reg)
 {
     uint8_t rx_buffer;
     nrfx_twim_xfer_desc_t i2c_xfer = NRFX_TWIM_XFER_DESC_TXRX(PMIC_I2C_ADDRESS, &reg, 1, &rx_buffer, 1);
-    APP_ERROR_CHECK(nrfx_twim_xfer(&i2c, &i2c_xfer, 0));
+    nrfx_err_t err = nrfx_twim_xfer(&i2c, &i2c_xfer, 0);
+    if (err != NRF_SUCCESS)
+    {
+        NRFX_DELAY_US(100);
+        LOG("Double read");
+        err = nrfx_twim_xfer(&i2c, &i2c_xfer, 0);
+        APP_ERROR_CHECK(err);
+    }
     return rx_buffer;
 }
 
@@ -231,12 +238,48 @@ bool s1_flash_is_busy(void)
 s1_error_t s1_flash_page_from_image(uint32_t offset,
                                     unsigned char * image)
 {
+    uint8_t tx[260];
 
+    // Disable write protection
+    tx[0] = 0x06;
+    flash_tx_rx((uint8_t*)&tx, 1, NULL, 0);
+
+    // Write page comand with 24bit address
+    // Lowest byte of address is always 0
+    tx[0] = 0x02;
+    tx[1] = offset >> 16;
+    tx[2] = offset >> 8;
+    tx[3] = 0x00; // Lower byte 0 to avoid partial pages
+
+    // Copy page from image and transfer
+    memcpy(tx + 4, image + offset, 256);
+    flash_tx_rx((uint8_t*)&tx, 260, NULL, 0);
 }
 
 void s1_fpga_hold_reset(void)
 {
     nrf_gpio_pin_clear(FPGA_RESET_PIN);
+}
+
+void s1_fpga_boot(void)
+{
+    // Release SPI
+    nrfx_spim_uninit(&spi);
+
+    // Set the SPI pins as inputs
+    // CS needs a pullup
+    nrf_gpio_cfg_input(SPI_CS_PIN, NRF_GPIO_PIN_PULLUP);
+    nrf_gpio_cfg_input(SPI_CLK_PIN, NRF_GPIO_PIN_NOPULL);
+    nrf_gpio_cfg_input(SPI_SI_PIN, NRF_GPIO_PIN_NOPULL);
+    nrf_gpio_cfg_input(SPI_SO_PIN, NRF_GPIO_PIN_NOPULL);
+    
+    // Bring FPGA out of reset
+    nrf_gpio_pin_set(FPGA_RESET_PIN);
+}
+
+bool s1_fpga_is_booted(void)
+{
+    return (bool) nrf_gpio_pin_read(FPGA_DONE_PIN);
 }
 
 s1_error_t s1_init(void)
