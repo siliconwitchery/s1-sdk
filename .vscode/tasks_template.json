@@ -1,0 +1,83 @@
+// VS Code Build Scripts
+//
+// These are shortcuts for command line calls for building
+// or doing other useful "tasks" such as clean or erasinig.
+//
+// By pressing Ctrl-Shift-B, or Cmd-Shift-B on MacOS, you 
+// will run the default make task shown below. By pressing
+// Ctrl-Shift-P, or Cmd-Shift-P, and typing "Run Task", you 
+// can select other tasks.
+//
+// By default, these tasks build the fpga-blinky example.
+// Modify these for your own project.
+
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Make and flash fpga-blinky",
+            "command": "make",
+            "args": [
+                "-j4", // For faster builds, set the number to your CPU core count
+                "-C",
+                "examples/fpga-blinky",
+                "flash"
+            ],
+            "problemMatcher": "$gcc",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        },
+        {
+            "label": "Make fpga-blinky",
+            "command": "make",
+            "args": [
+                "-j4", // For faster builds, set the number to your CPU core count
+                "-C",
+                "examples/fpga-blinky"
+            ],
+            "problemMatcher": "$gcc",
+        },
+        {
+            "label": "Build verilog project",
+            "command": "make",
+            "args": [
+                "-C",
+                "examples/fpga-blinky",
+                "build-verilog"
+            ],
+            "problemMatcher": []
+        },
+        {
+            "label": "Clean",
+            "command": "make",
+            "args": [
+                "-C",
+                "examples/fpga-blinky",
+                "clean"
+            ],
+            "problemMatcher": []
+        },
+        {
+            "label": "Erase",
+            "command": "make",
+            "args": [
+                "-C",
+                "examples/fpga-blinky",
+                "erase"
+            ],
+            "problemMatcher": []
+        },
+        {
+            "label": "Reset",
+            "command": "make",
+            "args": [
+                "-C",
+                "examples/fpga-blinky",
+                "reset"
+            ],
+            "problemMatcher": []
+        }
+    ]
+}
