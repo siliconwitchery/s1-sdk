@@ -84,7 +84,7 @@ The .vscode folder contains some handy build and debugging scripts if you decide
 
 ### Wire it up:
 
-![Diagram of S1 Popout with nRF52DK]()
+![Diagram of S1 Popout with nRF52DK](images/s1-nrfdk-wiring.jpg)
 
 ### Debug:
 
