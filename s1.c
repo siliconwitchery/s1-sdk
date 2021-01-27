@@ -2,17 +2,27 @@
  * @file  s1.c
  * @brief S1 Module Core Functions
  *        
- *        Various functions to setup and configure the
- *        S1 Module. To access these functions, use the
- *        s1.h header file.
+ *        Various functions to setup and configure the S1
+ *        Module. To access these functions, use the s1.h
+ *        header file.
  * 
- * @attention (c) 2021 Silicon Witchery 
- *            (info@siliconwitchery.com)
+ * @attention Copyright 2021 Silicon Witchery AB
  *
- *        Licensed under a Creative Commons Attribution 
- *        4.0 International License. This code is provided
- *        as-is and no warranty is given.
-*/
+ * Permission to use, copy, modify, and/or distribute this 
+ * software for any purpose with or without fee is hereby
+ * granted, provided that the above copyright notice and this
+ * permission notice appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS
+ * ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL 
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO 
+ * EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT, 
+ * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER 
+ * RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN 
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, 
+ * ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE 
+ * OF THIS SOFTWARE.
+ */
 
 #include <stdbool.h>
 #include <stdint.h>
