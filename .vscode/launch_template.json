@@ -18,7 +18,7 @@
         {
             "cwd": "${workspaceRoot}",
             "armToolchainPath": "/Applications/ARM/bin",
-            "executable": "${workspaceFolder}/examples/fpga-blinky/.build/s1-fpga-blinky.out",
+            "executable": "${workspaceFolder}/examples/fpga-blinky/.build/s1_fpga_blinky.out",
             "name": "JLink",
             "request": "launch",
             "type": "cortex-debug",

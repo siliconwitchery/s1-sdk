@@ -11,8 +11,6 @@
 #	make build-verilog
 #	make flash
 #
-
-
 # Include the S1 core makefile. Change S1_SDK_ROOT if you
 # move the project to a different location. Note that
 # "SDK_ROOT" is the nordic SDK. The name is unchanged to
@@ -36,7 +34,7 @@ $(shell touch main.c)
 # project by calling "make build-verlog".
 
 
-TARGETS          := s1-fpga-blinky
+TARGETS          := s1_fpga_blinky
 OUTPUT_DIRECTORY := .build
 
 # Source files common to all targets
@@ -142,10 +140,10 @@ LDFLAGS += -Wl,--gc-sections # let linker dump unused sections
 LDFLAGS += --specs=nano.specs # use newlib in nano version
 LDFLAGS += -u _printf_float # required to print floats
 
-s1-fpga-blinky: CFLAGS += -D__HEAP_SIZE=2048
-s1-fpga-blinky: CFLAGS += -D__STACK_SIZE=2048
-s1-fpga-blinky: ASMFLAGS += -D__HEAP_SIZE=2048
-s1-fpga-blinky: ASMFLAGS += -D__STACK_SIZE=2048
+s1_fpga_blinky: CFLAGS += -D__HEAP_SIZE=2048
+s1_fpga_blinky: CFLAGS += -D__STACK_SIZE=2048
+s1_fpga_blinky: ASMFLAGS += -D__HEAP_SIZE=2048
+s1_fpga_blinky: ASMFLAGS += -D__STACK_SIZE=2048
 
 # Add standard libraries at the very end of the linker input, after all objects
 # that may need symbols provided by these libraries.
@@ -160,11 +158,11 @@ $(foreach target, $(TARGETS), $(call define_target, $(target)))
 .PHONY: default flash erase reset help
 
 # Run "make" to build the project
-default: s1-fpga-blinky
+default: s1_fpga_blinky
 
 # Run "make flash" to build and flash the project
-flash: s1-fpga-blinky
-	nrfjprog -f nrf52 --program $(OUTPUT_DIRECTORY)/s1-fpga-blinky.hex --sectorerase -r
+flash: s1_fpga_blinky
+	nrfjprog -f nrf52 --program $(OUTPUT_DIRECTORY)/s1_fpga_blinky.hex --sectorerase -r
 
 # "make erase" fully erase the nRF52811 chip
 erase:
@@ -192,8 +190,8 @@ build-verilog:
 	# the C variable name, so we must
 	# change the name from "hardware" to
 	# "fpga_blinky_bin".
-	mv hardware.bin fpga-blinky.bin
-	xxd -i fpga-blinky.bin fpga_blinky_bin.h
+	mv hardware.bin fpga_blinky.bin
+	xxd -i fpga_blinky.bin fpga_blinky_bin.h
 
 	# Then we want the FPGA binary array
 	# stored in flash, so we append it
