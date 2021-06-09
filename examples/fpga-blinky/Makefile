@@ -11,13 +11,13 @@
 #	make build-verilog
 #	make flash
 #
-# Include the S1 core makefile. Change S1_SDK_ROOT if you
+# Include the S1 core makefile. Provide S1_SDK_ROOT if you
 # move the project to a different location. Note that
 # "SDK_ROOT" is the nordic SDK. The name is unchanged to
 # to ensure compatibity when copying makefiles from an nRF
 # project.
 
-S1_SDK_ROOT := ../..
+S1_SDK_ROOT ?= ../..
 include $(S1_SDK_ROOT)/s1.mk
 
 # In this project we always for recomple on main.c to
