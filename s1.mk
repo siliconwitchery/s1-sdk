@@ -6,7 +6,7 @@ ifeq ($(S1_SDK_ROOT),)
 S1_SDK_ROOT := .
 endif
 
-include $(S1_SDK_ROOT)/paths.mk
+# include $(S1_SDK_ROOT)/paths.mk
 
 LINKER_SCRIPT := $(S1_SDK_ROOT)/s1.ld
 
