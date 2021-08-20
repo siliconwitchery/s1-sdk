@@ -60,7 +60,6 @@ typedef enum
  */
 s1_error_t s1_init(void);
 
-
 /*******************************************************
  * Power related APIs
  *******************************************************/
@@ -128,7 +127,6 @@ s1_error_t s1_pmic_set_vadc(float voltage);
  */
 void s1_pimc_fpga_vcore(bool enable);
 
-
 /*******************************************************
  * Flash related APIs
  *******************************************************/
@@ -162,11 +160,10 @@ bool s1_flash_is_busy(void);
  * @returns true if busy.
  */
 s1_error_t s1_flash_page_from_image(uint32_t offset,
-                                    unsigned char * image);
-
+                                    unsigned char *image);
 
 /*******************************************************
- * Flash related APIs
+ * FPGA related APIs
  *******************************************************/
 
 /**
@@ -183,13 +180,23 @@ void s1_fpga_boot(void);
 
 bool s1_fpga_is_booted(void);
 
+/**
+ * @brief Configure SPI to communicate with FPGA.
+ */
+void generic_spi_init();
+
+/**
+ * @brief Transmit byte to FPGA over SPI.
+ */
+void generic_spi_tx(uint8_t tx_buffer);
+
 /*******************************************************
  * Basic Logging Macros
  *******************************************************/
 
 /**
  * @brief Clears the terminal screen of any previous logs.
- */ 
+ */
 #define LOG_CLEAR() SEGGER_RTT_printf(0, RTT_CTRL_CLEAR "\r");
 
 /**
@@ -216,14 +223,13 @@ bool s1_fpga_is_booted(void);
  * @param format: printf style format string
  * @param ...: Variadic argument list for printf data
  */
-#define LOG_RAW(format, ...)                                                                                    \
-    do                                                                                                          \
-    {                                                                                                           \
-        char _debug_log_buffer[SEGGER_RTT_CONFIG_BUFFER_SIZE_UP-1] = "";                                        \
-        snprintf(_debug_log_buffer, SEGGER_RTT_CONFIG_BUFFER_SIZE_UP-1, format, ##__VA_ARGS__);                 \
-        SEGGER_RTT_Write(0, _debug_log_buffer, strnlen(_debug_log_buffer, SEGGER_RTT_CONFIG_BUFFER_SIZE_UP));   \
-    } while(0)
-
+#define LOG_RAW(format, ...)                                                                                  \
+    do                                                                                                        \
+    {                                                                                                         \
+        char _debug_log_buffer[SEGGER_RTT_CONFIG_BUFFER_SIZE_UP - 1] = "";                                    \
+        snprintf(_debug_log_buffer, SEGGER_RTT_CONFIG_BUFFER_SIZE_UP - 1, format, ##__VA_ARGS__);             \
+        SEGGER_RTT_Write(0, _debug_log_buffer, strnlen(_debug_log_buffer, SEGGER_RTT_CONFIG_BUFFER_SIZE_UP)); \
+    } while (0)
 
 /*******************************************************
  * Error Handling
@@ -234,16 +240,22 @@ bool s1_fpga_is_booted(void);
  *        line number and a return value.
  * 
  * @param ret_value: Value to show in the log
- */ 
-#define s1_app_error(ret_value) \
-    LOG("Error at "__FILE__":%u - Returned value: %u\r\n",\
+ */
+#define s1_app_error(ret_value)         \
+    LOG("Error at "__FILE__             \
+        ":%u - Returned value: %u\r\n", \
         __LINE__, ret_value)
 
 /**
  * @brief Macro to trigger a software breakpoint
  *        and stop the program.
  */
-#define s1_app_assert() do{__asm__("BKPT"); while(1);}while(0);
-
+#define s1_app_assert()  \
+    do                   \
+    {                    \
+        __asm__("BKPT"); \
+        while (1)        \
+            ;            \
+    } while (0);
 
 #endif
