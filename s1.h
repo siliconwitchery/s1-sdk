@@ -166,6 +166,25 @@ s1_error_t s1_flash_page_from_image(uint32_t offset,
  * FPGA related APIs
  *******************************************************/
 
+typedef enum
+{
+    DISABLE,
+    INPUT,
+    OUTPUT,
+    PWM
+} s1_fpga_pin_mode;
+
+typedef struct
+{
+    s1_fpga_pin_mode pin_mode[7];
+    uint8_t duty_cycle[7];
+    uint8_t io_buf;
+} s1_fpga_pins_t;
+
+void s1_fpga_io_init(s1_fpga_pins_t *s1_fpga_pins);
+
+void s1_fpga_io_update(s1_fpga_pins_t *s1_fpga_pins);
+
 /**
  * @brief Puts the FPGA into reset. Reccomended to wait
  *        200uS before a subsequent flash/fpga operation.
@@ -183,12 +202,12 @@ bool s1_fpga_is_booted(void);
 /**
  * @brief Configure SPI to communicate with FPGA.
  */
-void generic_spi_init();
+void s1_generic_spi_init();
 
 /**
  * @brief Transmit byte to FPGA over SPI.
  */
-void generic_spi_tx(uint8_t tx_buffer);
+void s1_generic_spi_tx(uint8_t *tx_buffer, uint8_t len);
 
 /*******************************************************
  * Basic Logging Macros

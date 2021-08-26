@@ -106,7 +106,7 @@ static void flash_tx_rx(uint8_t *tx_buffer, size_t tx_len,
     APP_ERROR_CHECK(nrfx_spim_xfer(&spi, &spi_xfer, 0));
 }
 
-void generic_spi_init()
+void s1_generic_spi_init()
 {
     // SPI hardware configuration
     nrfx_spim_config_t spi_config = NRFX_SPIM_DEFAULT_CONFIG;
@@ -120,10 +120,32 @@ void generic_spi_init()
     nrfx_spim_init(&spi, &spi_config, NULL, NULL);
 }
 
-void generic_spi_tx(uint8_t tx_buffer)
+void s1_generic_spi_tx(uint8_t *tx_buffer, uint8_t len)
 {
-    nrfx_spim_xfer_desc_t spi_xfer = NRFX_SPIM_XFER_TX(&tx_buffer, 1);
+    nrfx_spim_xfer_desc_t spi_xfer = NRFX_SPIM_XFER_TX(tx_buffer, len);
     APP_ERROR_CHECK(nrfx_spim_xfer(&spi, &spi_xfer, 0));
+}
+
+void s1_fpga_io_init(s1_fpga_pins_t *s1_fpga_pins)
+{
+    s1_generic_spi_init();
+    // TODO: make fpga pin function configurable
+}
+
+void s1_fpga_io_update(s1_fpga_pins_t *s1_fpga_pins)
+{
+    static uint8_t tx_buffer[2];
+    for (int i = 0; i < 8; i++)
+    {
+        if (s1_fpga_pins->pin_mode[i] == PWM)
+        {
+            tx_buffer[0] = i + 1; // pin numbering starts at 1
+            tx_buffer[1] = s1_fpga_pins->duty_cycle[i];
+            s1_generic_spi_tx(tx_buffer, 2);
+            // LOG_RAW("%d %d ", tx_buffer[0], tx_buffer[1]);
+        }
+    }
+    // LOG_RAW("\r\n");
 }
 
 s1_error_t s1_pmic_set_vaux(float voltage)
