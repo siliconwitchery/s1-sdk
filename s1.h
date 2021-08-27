@@ -36,6 +36,30 @@
 #define __S1_SDK_VERSION__ "0.2"
 
 /**
+ * @brief Pinout definition for the nRF52811 chip
+ *        on the S1 Module.
+ * 
+ *        This isn't the pinout of the module itself,
+ *        but rather the internal connections between
+ *        the nRF, PMIC, flash IC and FPGA. 
+ */
+#define ADC1_PIN NRF_SAADC_INPUT_AIN2
+#define ADC2_PIN NRF_SAADC_INPUT_AIN3
+#define GPIO2_PIN NRF_GPIO_PIN_MAP(0, 5)
+#define PMIC_AMUX_PIN NRF_SAADC_INPUT_AIN1
+
+#define SPI_SI_PIN NRF_GPIO_PIN_MAP(0, 8)
+#define SPI_SO_PIN NRF_GPIO_PIN_MAP(0, 11)
+#define SPI_CS_PIN NRF_GPIO_PIN_MAP(0, 12)
+#define SPI_CLK_PIN NRF_GPIO_PIN_MAP(0, 15)
+#define FPGA_RESET_PIN NRF_GPIO_PIN_MAP(0, 20)
+#define FPGA_DONE_PIN NRF_GPIO_PIN_MAP(0, 16)
+
+#define PMIC_SDA_PIN NRF_GPIO_PIN_MAP(0, 14)
+#define PMIC_SCL_PIN NRF_GPIO_PIN_MAP(0, 17)
+#define PMIC_I2C_ADDRESS 0x48
+
+/**
  * @brief Typedef describing possible error conditions.
  *        S1_SUCCESS means the operation was okay. Can
  *        be used with the nRF APP_ERROR_CHECK() macro.
@@ -166,6 +190,9 @@ s1_error_t s1_flash_page_from_image(uint32_t offset,
  * FPGA related APIs
  *******************************************************/
 
+/**
+ * @brief Typedef describing possible GPIO modes.
+ */
 typedef enum
 {
     DISABLE,
@@ -174,6 +201,9 @@ typedef enum
     PWM
 } s1_fpga_pin_mode;
 
+/**
+ * @brief Struct with gpio configuration.
+ */
 typedef struct
 {
     s1_fpga_pin_mode pin_mode[7];
@@ -181,8 +211,18 @@ typedef struct
     uint8_t io_buf;
 } s1_fpga_pins_t;
 
+/**
+ * @brief Initializes fpga as io extender.
+ * 
+ * @param s1_fpga_pins_t: Pin configuration struct
+ */
 void s1_fpga_io_init(s1_fpga_pins_t *s1_fpga_pins);
 
+/**
+ * @brief Updates GPIO state to fpga.
+ * 
+ * @param s1_fpga_pins_t: Pin configuration struct
+ */
 void s1_fpga_io_update(s1_fpga_pins_t *s1_fpga_pins);
 
 /**
