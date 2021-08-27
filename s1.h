@@ -43,9 +43,15 @@
  *        but rather the internal connections between
  *        the nRF, PMIC, flash IC and FPGA. 
  */
-#define ADC1_PIN NRF_SAADC_INPUT_AIN2
-#define ADC2_PIN NRF_SAADC_INPUT_AIN3
-#define GPIO2_PIN NRF_GPIO_PIN_MAP(0, 5)
+
+// Pin definition for ADC1 pin on module
+#define ADC1_PIN NRF_SAADC_INPUT_AIN2    // for use with ADC
+#define GPIO1_PIN NRF_GPIO_PIN_MAP(0, 4) // for use as GPIO
+
+// Pin definition for ADC2 pin on module
+#define ADC2_PIN NRF_SAADC_INPUT_AIN3    // for use with ADC
+#define GPIO2_PIN NRF_GPIO_PIN_MAP(0, 5) // for use as GPIO
+
 #define PMIC_AMUX_PIN NRF_SAADC_INPUT_AIN1
 
 #define SPI_SI_PIN NRF_GPIO_PIN_MAP(0, 8)
