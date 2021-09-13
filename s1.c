@@ -94,7 +94,7 @@ void s1_generic_spi_init()
     spi_config.ss_active_high = 1; // Inverted CS
 
     // Initialise the SPI if it was not already
-    nrfx_spim_init(&spi, &spi_config, NULL, NULL);
+    APP_ERROR_CHECK(nrfx_spim_init(&spi, &spi_config, NULL, NULL));
 }
 
 void s1_generic_spi_tx(uint8_t *tx_buffer, uint8_t len)
@@ -114,13 +114,10 @@ void s1_fpga_io_update(s1_fpga_pins_t *s1_fpga_pins)
     static uint8_t tx_buffer[2];
     for (int i = 0; i < 8; i++)
     {
-        if (s1_fpga_pins->pin_mode[i] == PWM)
-        {
-            tx_buffer[0] = i + 1; // pin numbering starts at 1
-            tx_buffer[1] = s1_fpga_pins->duty_cycle[i];
-            s1_generic_spi_tx(tx_buffer, 2);
-            // LOG_RAW("%d %d ", tx_buffer[0], tx_buffer[1]);
-        }
+        tx_buffer[0] = i; // pin numbering starts at 1
+        tx_buffer[1] = s1_fpga_pins->duty_cycle[i];
+        s1_generic_spi_tx(tx_buffer, 2);
+        // LOG_RAW("%d %d ", tx_buffer[0], tx_buffer[1]);
     }
     // LOG_RAW("\r\n");
 }

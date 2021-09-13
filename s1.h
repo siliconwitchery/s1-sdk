@@ -212,8 +212,8 @@ typedef enum
  */
 typedef struct
 {
-    s1_fpga_pin_mode pin_mode[7];
-    uint8_t duty_cycle[7];
+    s1_fpga_pin_mode pin_mode[8];
+    uint8_t duty_cycle[8];
     uint8_t io_buf;
 } s1_fpga_pins_t;
 
