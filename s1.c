@@ -64,8 +64,8 @@ static void pmic_write_reg(uint8_t reg, uint8_t value)
     APP_ERROR_CHECK(nrfx_twim_xfer(&i2c, &i2c_xfer, 0));
 }
 
-static void flash_tx_rx(uint8_t *tx_buffer, size_t tx_len,
-                        uint8_t *rx_buffer, size_t rx_len)
+void flash_tx_rx(uint8_t *tx_buffer, size_t tx_len,
+                 uint8_t *rx_buffer, size_t rx_len)
 {
     // SPI hardware configuration
     nrfx_spim_config_t spi_config = NRFX_SPIM_DEFAULT_CONFIG;
