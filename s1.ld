@@ -39,6 +39,12 @@ SECTIONS
   .mem_section_dummy_rom :
   {
   }
+  .pwr_mgmt_data :
+  {
+    PROVIDE(__start_pwr_mgmt_data = .);
+    KEEP(*(SORT(.pwr_mgmt_data*)))
+    PROVIDE(__stop_pwr_mgmt_data = .);
+  } > FLASH
   .log_const_data :
   {
     PROVIDE(__start_log_const_data = .);
