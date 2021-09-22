@@ -91,6 +91,7 @@ void s1_generic_spi_init()
     spi_config.miso_pin = SPI_SI_PIN;
     spi_config.sck_pin = SPI_CLK_PIN;
     spi_config.ss_pin = SPI_CS_PIN;
+    spi_config.frequency = NRF_SPIM_FREQ_125K;
     spi_config.ss_active_high = 1; // Inverted CS
 
     // Initialise the SPI if it was not already
