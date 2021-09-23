@@ -29,37 +29,12 @@
 #include <string.h>
 #include <math.h>
 
-
 #include "nrf_gpio.h"
 #include "nrfx_saadc.h"
 #include "nrfx_spim.h"
 #include "nrfx_twim.h"
 #include "nrf52811.h"
 #include "s1.h"
-
-/**
- * @brief Pinout definition for the nRF52811 chip
- *        on the S1 Module.
- * 
- *        This isn't the pinout of the module itself,
- *        but rather the internal connections between
- *        the nRF, PMIC, flash IC and FPGA.
- */
-#define ADC1_PIN            NRF_SAADC_INPUT_AIN2
-#define ADC2_PIN            NRF_SAADC_INPUT_AIN3
-#define PMIC_AMUX_PIN       NRF_SAADC_INPUT_AIN1
-
-#define SPI_SI_PIN          NRF_GPIO_PIN_MAP(0, 8)
-#define SPI_SO_PIN          NRF_GPIO_PIN_MAP(0, 11)
-#define SPI_CS_PIN          NRF_GPIO_PIN_MAP(0, 12)
-#define SPI_CLK_PIN         NRF_GPIO_PIN_MAP(0, 15)
-#define FPGA_RESET_PIN      NRF_GPIO_PIN_MAP(0, 20)
-#define FPGA_DONE_PIN       NRF_GPIO_PIN_MAP(0, 16)
-
-#define PMIC_SDA_PIN        NRF_GPIO_PIN_MAP(0, 14)
-#define PMIC_SCL_PIN        NRF_GPIO_PIN_MAP(0, 17)
-#define PMIC_I2C_ADDRESS    0x48
-
 
 // Instances for I2C and SPI
 static const nrfx_spim_t spi = NRFX_SPIM_INSTANCE(0);
@@ -89,8 +64,8 @@ static void pmic_write_reg(uint8_t reg, uint8_t value)
     APP_ERROR_CHECK(nrfx_twim_xfer(&i2c, &i2c_xfer, 0));
 }
 
-static void flash_tx_rx(uint8_t * tx_buffer, size_t tx_len,
-                        uint8_t * rx_buffer, size_t rx_len)
+void flash_tx_rx(uint8_t *tx_buffer, size_t tx_len,
+                 uint8_t *rx_buffer, size_t rx_len)
 {
     // SPI hardware configuration
     nrfx_spim_config_t spi_config = NRFX_SPIM_DEFAULT_CONFIG;
@@ -102,10 +77,50 @@ static void flash_tx_rx(uint8_t * tx_buffer, size_t tx_len,
     // Initialise the SPI if it was not already
     nrfx_spim_init(&spi, &spi_config, NULL, NULL);
 
-    nrfx_spim_xfer_desc_t spi_xfer = NRFX_SPIM_XFER_TRX(tx_buffer, tx_len, 
+    nrfx_spim_xfer_desc_t spi_xfer = NRFX_SPIM_XFER_TRX(tx_buffer, tx_len,
                                                         rx_buffer, rx_len);
 
     APP_ERROR_CHECK(nrfx_spim_xfer(&spi, &spi_xfer, 0));
+}
+
+void s1_generic_spi_init()
+{
+    // SPI hardware configuration
+    nrfx_spim_config_t spi_config = NRFX_SPIM_DEFAULT_CONFIG;
+    spi_config.mosi_pin = SPI_SO_PIN;
+    spi_config.miso_pin = SPI_SI_PIN;
+    spi_config.sck_pin = SPI_CLK_PIN;
+    spi_config.ss_pin = SPI_CS_PIN;
+    spi_config.frequency = NRF_SPIM_FREQ_125K;
+    spi_config.ss_active_high = 1; // Inverted CS
+
+    // Initialise the SPI if it was not already
+    APP_ERROR_CHECK(nrfx_spim_init(&spi, &spi_config, NULL, NULL));
+}
+
+void s1_generic_spi_tx(uint8_t *tx_buffer, uint8_t len)
+{
+    nrfx_spim_xfer_desc_t spi_xfer = NRFX_SPIM_XFER_TX(tx_buffer, len);
+    APP_ERROR_CHECK(nrfx_spim_xfer(&spi, &spi_xfer, 0));
+}
+
+void s1_fpga_io_init(s1_fpga_pins_t *s1_fpga_pins)
+{
+    s1_generic_spi_init();
+    // TODO: make fpga pin function configurable
+}
+
+void s1_fpga_io_update(s1_fpga_pins_t *s1_fpga_pins)
+{
+    static uint8_t tx_buffer[2];
+    for (int i = 0; i < 8; i++)
+    {
+        tx_buffer[0] = i; // pin numbering starts at 1
+        tx_buffer[1] = s1_fpga_pins->duty_cycle[i];
+        s1_generic_spi_tx(tx_buffer, 2);
+        // LOG_RAW("%d %d ", tx_buffer[0], tx_buffer[1]);
+    }
+    // LOG_RAW("\r\n");
 }
 
 s1_error_t s1_pmic_set_vaux(float voltage)
@@ -200,19 +215,19 @@ s1_error_t s1_flash_wakeup(void)
     // Wake up the flash
     uint8_t wake_seq[4] = {0xAB, 0, 0, 0};
     uint8_t wake_res[5] = {0};
-    flash_tx_rx((uint8_t*)&wake_seq, 4, (uint8_t*)&wake_res, 5);
+    flash_tx_rx((uint8_t *)&wake_seq, 4, (uint8_t *)&wake_res, 5);
     NRFX_DELAY_US(3); // tRES1 required to come out of sleep
 
     // Reset sequence has to happen as two transfers
     uint8_t reset_seq[3] = {0x66, 0x99};
-    flash_tx_rx((uint8_t*)&reset_seq, 1, NULL, 0);
-    flash_tx_rx((uint8_t*)&reset_seq+1, 1, NULL, 0);
+    flash_tx_rx((uint8_t *)&reset_seq, 1, NULL, 0);
+    flash_tx_rx((uint8_t *)&reset_seq + 1, 1, NULL, 0);
     NRFX_DELAY_US(30); // tRST to fully reset
 
     // Check if the capacity ID corresponds to 32M
     uint8_t cap_id_reg[1] = {0x9F};
     uint8_t cap_id_res[4] = {0};
-    flash_tx_rx((uint8_t*)&cap_id_reg, 1, (uint8_t*)&cap_id_res, 4);
+    flash_tx_rx((uint8_t *)&cap_id_reg, 1, (uint8_t *)&cap_id_res, 4);
 
     if (cap_id_res[3] != 0x16)
     {
@@ -226,8 +241,8 @@ void s1_flash_erase_all(void)
 {
     // Issue erase sequence
     uint8_t erase_seq[2] = {0x06, 0x60};
-    flash_tx_rx((uint8_t*)&erase_seq, 1, NULL, 0);
-    flash_tx_rx((uint8_t*)&erase_seq+1, 1, NULL, 0);
+    flash_tx_rx((uint8_t *)&erase_seq, 1, NULL, 0);
+    flash_tx_rx((uint8_t *)&erase_seq + 1, 1, NULL, 0);
 }
 
 bool s1_flash_is_busy(void)
@@ -235,7 +250,7 @@ bool s1_flash_is_busy(void)
     // Read status register
     uint8_t status_reg[1] = {0x05};
     uint8_t status_res[2] = {0};
-    flash_tx_rx((uint8_t*)&status_reg, 1, (uint8_t*)&status_res, 2);
+    flash_tx_rx((uint8_t *)&status_reg, 1, (uint8_t *)&status_res, 2);
 
     if (!(status_res[1] & 0x01))
     {
@@ -246,13 +261,13 @@ bool s1_flash_is_busy(void)
 }
 
 s1_error_t s1_flash_page_from_image(uint32_t offset,
-                                    unsigned char * image)
+                                    unsigned char *image)
 {
     uint8_t tx[260];
 
     // Disable write protection
     tx[0] = 0x06;
-    flash_tx_rx((uint8_t*)&tx, 1, NULL, 0);
+    flash_tx_rx((uint8_t *)&tx, 1, NULL, 0);
 
     // Write page comand with 24bit address
     // Lowest byte of address is always 0
@@ -263,7 +278,7 @@ s1_error_t s1_flash_page_from_image(uint32_t offset,
 
     // Copy page from image and transfer
     memcpy(tx + 4, image + offset, 256);
-    flash_tx_rx((uint8_t*)&tx, 260, NULL, 0);
+    flash_tx_rx((uint8_t *)&tx, 260, NULL, 0);
 }
 
 void s1_fpga_hold_reset(void)
@@ -282,14 +297,14 @@ void s1_fpga_boot(void)
     nrf_gpio_cfg_input(SPI_CLK_PIN, NRF_GPIO_PIN_NOPULL);
     nrf_gpio_cfg_input(SPI_SI_PIN, NRF_GPIO_PIN_NOPULL);
     nrf_gpio_cfg_input(SPI_SO_PIN, NRF_GPIO_PIN_NOPULL);
-    
+
     // Bring FPGA out of reset
     nrf_gpio_pin_set(FPGA_RESET_PIN);
 }
 
 bool s1_fpga_is_booted(void)
 {
-    return (bool) nrf_gpio_pin_read(FPGA_DONE_PIN);
+    return (bool)nrf_gpio_pin_read(FPGA_DONE_PIN);
 }
 
 s1_error_t s1_init(void)

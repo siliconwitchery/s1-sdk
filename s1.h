@@ -36,6 +36,36 @@
 #define __S1_SDK_VERSION__ "0.2"
 
 /**
+ * @brief Pinout definition for the nRF52811 chip
+ *        on the S1 Module.
+ * 
+ *        This isn't the pinout of the module itself,
+ *        but rather the internal connections between
+ *        the nRF, PMIC, flash IC and FPGA. 
+ */
+
+// Pin definition for ADC1 pin on module
+#define ADC1_PIN NRF_SAADC_INPUT_AIN2    // for use with ADC
+#define GPIO1_PIN NRF_GPIO_PIN_MAP(0, 4) // for use as GPIO
+
+// Pin definition for ADC2 pin on module
+#define ADC2_PIN NRF_SAADC_INPUT_AIN3    // for use with ADC
+#define GPIO2_PIN NRF_GPIO_PIN_MAP(0, 5) // for use as GPIO
+
+#define PMIC_AMUX_PIN NRF_SAADC_INPUT_AIN1
+
+#define SPI_SI_PIN NRF_GPIO_PIN_MAP(0, 8)
+#define SPI_SO_PIN NRF_GPIO_PIN_MAP(0, 11)
+#define SPI_CS_PIN NRF_GPIO_PIN_MAP(0, 12)
+#define SPI_CLK_PIN NRF_GPIO_PIN_MAP(0, 15)
+#define FPGA_RESET_PIN NRF_GPIO_PIN_MAP(0, 20)
+#define FPGA_DONE_PIN NRF_GPIO_PIN_MAP(0, 16)
+
+#define PMIC_SDA_PIN NRF_GPIO_PIN_MAP(0, 14)
+#define PMIC_SCL_PIN NRF_GPIO_PIN_MAP(0, 17)
+#define PMIC_I2C_ADDRESS 0x48
+
+/**
  * @brief Typedef describing possible error conditions.
  *        S1_SUCCESS means the operation was okay. Can
  *        be used with the nRF APP_ERROR_CHECK() macro.
@@ -59,7 +89,6 @@ typedef enum
  * @returns S1_SUCCESS if okay. Error otherwise.
  */
 s1_error_t s1_init(void);
-
 
 /*******************************************************
  * Power related APIs
@@ -128,7 +157,6 @@ s1_error_t s1_pmic_set_vadc(float voltage);
  */
 void s1_pimc_fpga_vcore(bool enable);
 
-
 /*******************************************************
  * Flash related APIs
  *******************************************************/
@@ -162,12 +190,46 @@ bool s1_flash_is_busy(void);
  * @returns true if busy.
  */
 s1_error_t s1_flash_page_from_image(uint32_t offset,
-                                    unsigned char * image);
-
+                                    unsigned char *image);
 
 /*******************************************************
- * Flash related APIs
+ * FPGA related APIs
  *******************************************************/
+
+/**
+ * @brief Typedef describing possible GPIO modes.
+ */
+typedef enum
+{
+    DISABLE,
+    INPUT,
+    OUTPUT,
+    PWM
+} s1_fpga_pin_mode;
+
+/**
+ * @brief Struct with gpio configuration.
+ */
+typedef struct
+{
+    s1_fpga_pin_mode pin_mode[8];
+    uint8_t duty_cycle[8];
+    uint8_t io_buf;
+} s1_fpga_pins_t;
+
+/**
+ * @brief Initializes fpga as io extender.
+ * 
+ * @param s1_fpga_pins_t: Pin configuration struct
+ */
+void s1_fpga_io_init(s1_fpga_pins_t *s1_fpga_pins);
+
+/**
+ * @brief Updates GPIO state to fpga.
+ * 
+ * @param s1_fpga_pins_t: Pin configuration struct
+ */
+void s1_fpga_io_update(s1_fpga_pins_t *s1_fpga_pins);
 
 /**
  * @brief Puts the FPGA into reset. Reccomended to wait
@@ -183,13 +245,26 @@ void s1_fpga_boot(void);
 
 bool s1_fpga_is_booted(void);
 
+/**
+ * @brief Configure SPI to communicate with FPGA.
+ */
+void s1_generic_spi_init();
+
+/**
+ * @brief Transmit byte to FPGA over SPI.
+ */
+void s1_generic_spi_tx(uint8_t *tx_buffer, uint8_t len);
+
+void flash_tx_rx(uint8_t *tx_buffer, size_t tx_len,
+                 uint8_t *rx_buffer, size_t rx_len);
+
 /*******************************************************
  * Basic Logging Macros
  *******************************************************/
 
 /**
  * @brief Clears the terminal screen of any previous logs.
- */ 
+ */
 #define LOG_CLEAR() SEGGER_RTT_printf(0, RTT_CTRL_CLEAR "\r");
 
 /**
@@ -216,14 +291,13 @@ bool s1_fpga_is_booted(void);
  * @param format: printf style format string
  * @param ...: Variadic argument list for printf data
  */
-#define LOG_RAW(format, ...)                                                                                    \
-    do                                                                                                          \
-    {                                                                                                           \
-        char _debug_log_buffer[SEGGER_RTT_CONFIG_BUFFER_SIZE_UP-1] = "";                                        \
-        snprintf(_debug_log_buffer, SEGGER_RTT_CONFIG_BUFFER_SIZE_UP-1, format, ##__VA_ARGS__);                 \
-        SEGGER_RTT_Write(0, _debug_log_buffer, strnlen(_debug_log_buffer, SEGGER_RTT_CONFIG_BUFFER_SIZE_UP));   \
-    } while(0)
-
+#define LOG_RAW(format, ...)                                                                                  \
+    do                                                                                                        \
+    {                                                                                                         \
+        char _debug_log_buffer[SEGGER_RTT_CONFIG_BUFFER_SIZE_UP - 1] = "";                                    \
+        snprintf(_debug_log_buffer, SEGGER_RTT_CONFIG_BUFFER_SIZE_UP - 1, format, ##__VA_ARGS__);             \
+        SEGGER_RTT_Write(0, _debug_log_buffer, strnlen(_debug_log_buffer, SEGGER_RTT_CONFIG_BUFFER_SIZE_UP)); \
+    } while (0)
 
 /*******************************************************
  * Error Handling
@@ -234,16 +308,22 @@ bool s1_fpga_is_booted(void);
  *        line number and a return value.
  * 
  * @param ret_value: Value to show in the log
- */ 
-#define s1_app_error(ret_value) \
-    LOG("Error at "__FILE__":%u - Returned value: %u\r\n",\
+ */
+#define s1_app_error(ret_value)         \
+    LOG("Error at "__FILE__             \
+        ":%u - Returned value: %u\r\n", \
         __LINE__, ret_value)
 
 /**
  * @brief Macro to trigger a software breakpoint
  *        and stop the program.
  */
-#define s1_app_assert() do{__asm__("BKPT"); while(1);}while(0);
-
+#define s1_app_assert()  \
+    do                   \
+    {                    \
+        __asm__("BKPT"); \
+        while (1)        \
+            ;            \
+    } while (0);
 
 #endif
