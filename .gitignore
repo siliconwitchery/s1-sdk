@@ -1,19 +1,5 @@
 # MacOS cache files
 .DS_Store
 
-# Files created from templates
-.vscode/c_cpp_properties.json
-.vscode/launch.json
-.vscode/tasks.json
-paths.mk
-
-# FPGA blinky demo build files
-examples/fpga-blinky/.*
-examples/fpga-blinky/.build
-examples/fpga-blinky/*.asc
-examples/fpga-blinky/*.bin
-examples/fpga-blinky/*.json
-
-# Debug state files
-.vscode/.cortex-debug.peripherals.state.json
-.vscode/.cortex-debug.registers.state.json
+# VSCode files
+# .vscode
