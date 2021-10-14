@@ -148,8 +148,8 @@ TARGETS := $(PROJECT_NAME)
 include $(TEMPLATE_PATH)/Makefile.common
 $(foreach target, $(TARGETS), $(call define_target, $(target)))
 
-# Always recomple s1.c to include the latest date, time and version stamps.
-$(shell touch s1.c)
+# Always recompile s1.c to include the latest date, time and version stamps.
+$(shell touch $(S1_SDK_PATH)/s1.c)
 
 # These are the standard build tasks. 
 # You can add more in your own Makefile.
