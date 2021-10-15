@@ -1,4 +1,4 @@
-# Base SDK makefile.
+ # Base SDK makefile.
 # ------------------
 #
 # Copyright 2021 Silicon Witchery AB
