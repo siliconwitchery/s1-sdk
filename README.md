@@ -1,123 +1,56 @@
 # S1 Software Development Kit
 
-The **S1 System-on-Module** is a tiny Bluetooth and FPGA module based on the Nordic [nRF52811 chip](https://www.nordicsemi.com/Products/Low-power-short-range-wireless/nRF52811) and Lattice [iCE40 FPGA](https://www.latticesemi.com/en/Products/FPGAandCPLD/iCE40UltraPlus). This lightweight software development kit is intended to let you quickly configure the S1, while letting you easily work with Nordic's existing SDK and libraries.
+This is the main SDK for the [S1 System-on-Module](https://www.siliconwitchery.com/module). It doesn't do much on it's own, you should use it with an example. Try it with the [FPGA blinky demo](#), or the [S1 ECG demo](https://github.com/siliconwitchery/s1-ecg-demo).
 
-**WARNING: Be careful if you decide to access the S1's core devices outside the provided APIs. The Power Management IC is capable of outputting high voltages, and misconfiguration may destroy the devices on the S1.**
+You will however need to setup your system in order to build everything.
 
-## Getting started
+## Here's how to do it
 
-### 1. Install build tools:
+- First, download and extract the [Nordic nRF5 SDK](https://www.nordicsemi.com/Software-and-tools/Software/nRF5-SDK) somewhere onto your system.
 
-1. Install the [ARM GCC Toolchain](https://developer.arm.com/tools-and-software/open-source-software/developer-tools/gnu-toolchain/gnu-rm/downloads)
+Then install the following tools: 
 
-1. Extract the [Nordic nRF5 SDK](https://www.nordicsemi.com/Software-and-tools/Software/nRF5-SDK) to your home folder
+- [ARM GCC toolchain](https://developer.arm.com/tools-and-software/open-source-software/developer-tools/gnu-toolchain/gnu-rm/downloads)
+- [J-Link software pack](https://www.segger.com/downloads/jlink/#J-LinkSoftwareAndDocumentationPack) or your preferred debugging tool.
+- [nRF command line tools](https://www.nordicsemi.com/Software-and-tools/Development-Tools/nRF-Command-Line-Tools/Download) is convenient if you're using a JLink.
+- [yosys](https://yosyshq.net/yosys/download.html), [icestorm & NextPNR](http://www.clifford.at/icestorm/).
+- Optionally [gtkwave](http://gtkwave.sourceforge.net) and [iVerilog](http://iverilog.icarus.com) are useful for simulation and verification.
 
-1. Install the [Nordic command line tools](https://www.nordicsemi.com/Software-and-tools/Development-Tools/nRF-Command-Line-Tools/Download)
 
-1. Ensure `nrfjprog` runs from the command line
 
-1. Install [APIO](https://github.com/FPGAwars/apio)
+### MacOS
 
-1. Ensure `apio` runs from the command line
+We recommend using [homebrew](https://brew.sh) along with our [brew formula](https://github.com/siliconwitchery/homebrew-oss-fpga) to install everything.
 
-1. Run `apio install -a` from the command line
+### Windows
 
-1. Ensure `make` runs from the the command line. *MacOS users may need to run `xcode-select --install`. Windows users can use [GnuWin](http://gnuwin32.sourceforge.net/) or [chocolatey](https://chocolatey.org/packages/make)*
+Most of these tools are available as installers, but some of them might need Cygwin or similar. It's best to Google how to do this, and we will update this page once we've tested it.
 
-Optionally Install the [J-Link Software Pack](https://www.segger.com/downloads/jlink/#J-LinkSoftwareAndDocumentationPack) if you want the latest tools, though the Nordic command line tools already comes bundled with them.
+### Linux
 
-### Setup the SDK:
+Most of these tools are available from standard package managers, but you can build them for source quite easily.
 
-1. Download this SDK. *Or clone it by running `git clone https://github.com/siliconwitchery/s1-sdk.git` from your terminal.*
+## Overview of files:
 
-1. Duplicate `paths_template.mk` and rename it to `paths.mk`.
+We've designed this SDK so you can add it as a sub-module into your own git projects. The files here are therefore very lightweight and designed to be easy to use.
 
-1. Modify `paths.mk` with the paths of your installed tools.
+- `s1.mk` - This is the core makefile that ensures that the nRF code can be built. You should call it with your own `Makefile` where you specify your applications files and any other settings you may want.
 
-### Test a build:
+- `s1.c` - These are the core functions that run on the nRF chip. Access them via `s1.h`
 
-1. Open a terminal and navigate to the `s1-sdk` folder.
+- `s1.h` - Here you'll find the APIs for configuration and runtime functions that run on the nRF chip. You can include this file and call them from your own application code.
 
-1. Run `make -C examples/fpga-blinky`
+- `s1.ld` - This is the linker file which determines the memory layout within the nRF chip when the code is built.
 
-1. The project should build without errors.
+- `s1.pcf` - The FPGA pin configuration resides here. The names of the pins correspond to the pins of the FPGA, where `Dx` are the exposed pins, and the remaining pins are internal to the module.
 
-1. To test a fpga verilog build, run `make -C examples/fpga-blinky build-verilog`
+That's it! Again in order to use these files, it's better to look at an example project, and copy that layout for your own application.
 
-1. The APIO build process should run without errors.
+## Precautions
 
-### Setup VS Code:
+Be careful if you decide to access S1 core components outside of the SDK. The PMIC is capable of blowing up everything on the module if set incorrectly, and we're already tuned things to work as efficiently as possible.
 
-The .vscode folder contains some handy build and debugging scripts if you decide to use VS Code as your IDE. To setup VS Code:
-
-1. Install [VS Code](https://code.visualstudio.com)
-
-1. Click the Extensions tab along the right bar.
-
-1. Install the **Cortex-Debug** plugin by marus25.
-
-1. Install the **C/C++** plugin by Microsoft.
-
-1. Install the **Better C++ Syntax** plugin by Jeff Hykin.
-
-1. Install the **Verilog-HDL/SystemVerilog** by mshr-h.
-
-1. Duplicate the three files in the `.vscode` folder and rename them to. `tasks.json`, `launch.json` and `cpp_properties.json`
-
-1. Modify these files to match your install paths.
-
-1. On the Explorer tap, add the `s1-sdk` folder as well as the `nRF5 SDK` folder.
-
-1. Press **Ctrl-Shift-B** (**Cmd-Shift-B** on MacOS) to build the test project.
-
-1. It should build successfully, otherwise check the terminal output to solve any errors.
-
-## Running on Hardware
-
-### You will need:
-
-1. Your custom S1 board, or the S1 Popout board *(Coming soon)*
-
-1. Any model of [J-Link debugger](https://www.segger.com/products/debug-probes/j-link/models/model-overview/), or a [Nordic nRF52DK Board](https://www.nordicsemi.com/Software-and-Tools/Development-Kits/nRF52-DK). The [Black Magic Probe]() is also supported, but you will need to adjust the launch script within the .vscode folder of this project. 
-
-1. A [10 pin Cortex Debug Cable](https://www.adafruit.com/product/1675). It comes included with a J-Link mini EDU and Black magic probe, however for the nRF52DK, you will need to buy one.
-
-### Wire it up:
-
-![Diagram of S1 Popout with nRF52DK](images/s1-nrfdk-wiring.jpg)
-
-### Debug:
-
-A launch script in the `.vscode` folder demonstrates how to start a GDB debugging session over J-Link. To run it from VS Code:
-
-1. Build the project.
-
-1. Click the Run tab on the left bar.
-
-1. Ensure the JLink launch configuration is selected.
-
-1. Press the green play button.
-
-1. The board should automatically flash, and wait at `main()`
-
-1. Click Continue (F5) to run the application.
-
-The environment is now fully configured to start developing with.
-
-### Logging:
-
-The Nordic SDK uses Segger's RTT protocol to return serial logs over a J-Link debugger. Read more about the protocol [here](https://www.segger.com/products/debug-probes/j-link/technology/about-real-time-transfer/).
-
-Logging is enabled by default. To read the logs you can use:
-
-- JLinkRTTClient.exe – If the GDB debugger is running.
-- JLinkRTTViewer.exe – If the debugger is not running. Be sure to select `nRF52811_xxAA` and `SWD`.
-
-## Project Structure
-
-The S1 SDK contains minimal files and an API header for configuring the S1 Module peripherals. Outside of that you're free to use the Nordic APIs directly. Each example in the S1 SDK is closely based around a Nordic SDK example. By including `s1.mk` at the top of your project's `Makefile`, and `s1.h` in your `main.c` file, you will have access to the S1 configuration APIs.
-
-Be sure to pull this repository occasionally to receive bugfixes and updated features.
+It's also possible to misconfigure the battery charger and send dangerously high currents to small batteries. Be sure to read the datasheet of the PMIC, as well as our [documentation center](https://docs.siliconwitchery.com/hardware/s1-module/) before connecting batteries to the S1.
 
 ## Give us feedback
 
