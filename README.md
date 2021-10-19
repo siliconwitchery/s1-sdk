@@ -4,7 +4,7 @@ This is the main SDK for the [S1 System-on-Module](https://www.siliconwitchery.c
 
 You will however need to setup your system in order to build everything.
 
-## Here's how to do it
+## Setting up the tools
 
 - First, download and extract the [Nordic nRF5 SDK](https://www.nordicsemi.com/Software-and-tools/Software/nRF5-SDK) somewhere onto your system.
 
