@@ -1,6 +1,6 @@
 # S1 Software Development Kit
 
-This is the main SDK for the [S1 System-on-Module](https://www.siliconwitchery.com/module). It doesn't do much on it's own, you should use it with an example. Try it with the [FPGA blinky demo](#), or the [S1 ECG demo](https://github.com/siliconwitchery/s1-ecg-demo).
+This is the main SDK for the [S1 System-on-Module](https://www.siliconwitchery.com/module). It doesn't do much on it's own, you should use it with an example. Try it with the [FPGA blinky demo](https://github.com/siliconwitchery/s1-blinky-demo), or the [S1 ECG demo](https://github.com/siliconwitchery/s1-ecg-demo).
 
 You will however need to setup your system in order to build everything.
 
