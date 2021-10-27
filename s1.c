@@ -83,7 +83,7 @@ void flash_tx_rx(uint8_t *tx_buffer, size_t tx_len,
     APP_ERROR_CHECK(nrfx_spim_xfer(&spi, &spi_xfer, 0));
 }
 
-void s1_generic_spi_init()
+void s1_generic_spi_init(int nrf_spim_freq)
 {
     // SPI hardware configuration
     nrfx_spim_config_t spi_config = NRFX_SPIM_DEFAULT_CONFIG;
@@ -91,7 +91,23 @@ void s1_generic_spi_init()
     spi_config.miso_pin = SPI_SI_PIN;
     spi_config.sck_pin = SPI_CLK_PIN;
     spi_config.ss_pin = SPI_CS_PIN;
-    spi_config.frequency = NRF_SPIM_FREQ_125K;
+
+    // TODO: Clean this bit up
+    if (nrf_spim_freq == NRF_SPIM_FREQ_125K)
+        spi_config.frequency = NRF_SPIM_FREQ_125K;
+    else if (nrf_spim_freq == NRF_SPIM_FREQ_250K)
+        spi_config.frequency = NRF_SPIM_FREQ_250K;
+    else if (nrf_spim_freq == NRF_SPIM_FREQ_500K)
+        spi_config.frequency = NRF_SPIM_FREQ_500K;
+    else if (nrf_spim_freq == NRF_SPIM_FREQ_1M)
+        spi_config.frequency = NRF_SPIM_FREQ_1M;
+    else if (nrf_spim_freq == NRF_SPIM_FREQ_2M)
+        spi_config.frequency = NRF_SPIM_FREQ_2M;
+    else if (nrf_spim_freq == NRF_SPIM_FREQ_4M)
+        spi_config.frequency = NRF_SPIM_FREQ_4M;
+    else // default 1M
+        spi_config.frequency = NRF_SPIM_FREQ_1M;
+
     spi_config.ss_active_high = 1; // Inverted CS
 
     // Initialise the SPI if it was not already
@@ -106,7 +122,7 @@ void s1_generic_spi_tx(uint8_t *tx_buffer, uint8_t len)
 
 void s1_fpga_io_init(s1_fpga_pins_t *s1_fpga_pins)
 {
-    s1_generic_spi_init();
+    s1_generic_spi_init(NRF_SPIM_FREQ_125K);
     // TODO: make fpga pin function configurable
 }
 

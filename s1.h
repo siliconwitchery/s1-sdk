@@ -248,7 +248,7 @@ bool s1_fpga_is_booted(void);
 /**
  * @brief Configure SPI to communicate with FPGA.
  */
-void s1_generic_spi_init();
+void s1_generic_spi_init(int nrf_spim_freq);
 
 /**
  * @brief Transmit byte to FPGA over SPI.
