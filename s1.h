@@ -254,6 +254,7 @@ void s1_generic_spi_init(int nrf_spim_freq);
  * @brief Transmit byte to FPGA over SPI.
  */
 void s1_generic_spi_tx(uint8_t *tx_buffer, uint8_t len);
+void s1_generic_spi_tx_rx(uint8_t *tx_buffer, uint8_t tx_len, uint8_t *rx_buffer, uint8_t rx_len);
 
 void flash_tx_rx(uint8_t *tx_buffer, size_t tx_len,
                  uint8_t *rx_buffer, size_t rx_len);

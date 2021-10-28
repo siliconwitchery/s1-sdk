@@ -120,6 +120,12 @@ void s1_generic_spi_tx(uint8_t *tx_buffer, uint8_t len)
     APP_ERROR_CHECK(nrfx_spim_xfer(&spi, &spi_xfer, 0));
 }
 
+void s1_generic_spi_tx_rx(uint8_t *tx_buffer, uint8_t tx_len, uint8_t *rx_buffer, uint8_t rx_len)
+{
+    nrfx_spim_xfer_desc_t spi_xfer = NRFX_SPIM_XFER_TRX(tx_buffer, tx_len, rx_buffer, rx_len);
+    APP_ERROR_CHECK(nrfx_spim_xfer(&spi, &spi_xfer, 0));
+}
+
 void s1_fpga_io_init(s1_fpga_pins_t *s1_fpga_pins)
 {
     s1_generic_spi_init(NRF_SPIM_FREQ_125K);
