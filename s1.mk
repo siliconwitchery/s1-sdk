@@ -41,6 +41,7 @@ SRC_FILES += \
   $(NRF_SDK_PATH)/components/libraries/atomic_fifo/nrf_atfifo.c \
   $(NRF_SDK_PATH)/components/libraries/atomic/nrf_atomic.c \
   $(NRF_SDK_PATH)/components/libraries/balloc/nrf_balloc.c \
+  $(NRF_SDK_PATH)/components/libraries/experimental_section_vars/nrf_section_iter.c \
   $(NRF_SDK_PATH)/components/libraries/memobj/nrf_memobj.c \
   $(NRF_SDK_PATH)/components/libraries/ringbuf/nrf_ringbuf.c \
   $(NRF_SDK_PATH)/components/libraries/scheduler/app_scheduler.c \
@@ -131,7 +132,7 @@ LDFLAGS += -mthumb -mabi=aapcs -L$(NRF_SDK_PATH)/modules/nrfx/mdk -T$(S1_SDK_PAT
 LDFLAGS += -mcpu=cortex-m4
 LDFLAGS += -Wl,--gc-sections # let linker dump unused sections
 LDFLAGS += --specs=nano.specs # use newlib in nano version
-LDFLAGS += -u _printf_float # required to print floats
+# LDFLAGS += -u _printf_float # required to print floats
 
 # Here we set the stack and heap.
 $(PROJECT_NAME): CFLAGS += -D__HEAP_SIZE=2048
