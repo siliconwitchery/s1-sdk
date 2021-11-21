@@ -23,7 +23,7 @@
 
 # You don't need to change anything here, but include this file in your own
 # Makefile. From there you can override anything marked with ?=, or append to
-# anything marked with += such as .c and .h files, or optimization flags.
+# anything marked with += such as .c, .h files, or optimization flags.
 
 
 # As a minimum, you only need to set these variables from you Makefile.
@@ -33,6 +33,17 @@ S1_SDK_PATH ?= s1-sdk
 
 # Optionally, you can change the build directory.
 OUTPUT_DIRECTORY ?= .build
+
+# There's also a sim dicrectory which can be used for verilog testbench outputs
+SIM_DIRECTORY ?= .sim
+
+# If using a bluetooth stack, the linker file must be changed to one with
+# correct memory addresses for the bluetooth softdevice. Otherwise no bluetooth
+# stack memory will be allocated in this basic linker file.
+LINKER_FILE ?= $(S1_SDK_PATH)/linker-files/s1-basic-linker.ld
+
+# The GNU GCC prefix shouldn't change, but if you need to change it, you can
+GNU_PREFIX ?= arm-none-eabi
 
 # You can add more source files using 'SRC_FILES += ' in your Makefile.
 SRC_FILES += \
@@ -99,40 +110,53 @@ INC_FOLDERS += \
 # Libraries can also be added.
 LIB_FILES += \
 
-# These C flags are required, but you can add more in your Makefile.
+# These are some sensible warnings and optimizations. You can add more, or
+# override them completely 
+WARN ?= -Wall -Wextra -Wpedantic -Wvla -Wnull-dereference -Wswitch-enum \
+        -Wundef -Wdouble-promotion -Wformat=2 -Wconversion -Wformat-truncation \
+        -Wstack-usage=1000 -Wshadow -Wduplicated-cond -Wduplicated-branches
+
+OPT ?= -std=gnu17 -pedantic -Os -g3 -fno-common -fstack-usage \
+	     -ffunction-sections -fdata-sections -flto  -fno-strict-aliasing \
+       -fno-builtin -fshort-enums
+
+# These are some sensible default C flags, but you can add more in your 
+# Makefile. If you're using a bluetooth stack, then you'll have to add a few
+# specific flags to configure the softdevice also.
 CFLAGS += $(OPT)
+CFLAGS += $(WARN)
 CFLAGS += -DAPP_TIMER_V2
 CFLAGS += -DAPP_TIMER_V2_RTC1_ENABLED
 CFLAGS += -DFLOAT_ABI_SOFT
 CFLAGS += -DNRF52811_XXAA
 CFLAGS += -DNRFX_COREDEP_DELAY_US_LOOP_CYCLES=3
 CFLAGS += -mcpu=cortex-m4
-CFLAGS += -mthumb -mabi=aapcs
-CFLAGS += -Wall
 CFLAGS += -mfloat-abi=soft
-CFLAGS += -ffunction-sections -fdata-sections -fno-strict-aliasing
-CFLAGS += -fno-builtin -fshort-enums
+CFLAGS += -mthumb -mabi=aapcs
 
-# C++ flags can be added if needed.
+# C++ flags can also be added if needed.
 CXXFLAGS += $(OPT)
+CXXFLAGS += $(WARN)
 
 # These assembly flags are required, but you can add more in your Makefile.
+ASMFLAGS += $(OPT)
+ASMFLAGS += $(WARN)
 ASMFLAGS += -DAPP_TIMER_V2
 ASMFLAGS += -DAPP_TIMER_V2_RTC1_ENABLED
-ASMFLAGS += -mcpu=cortex-m4
-ASMFLAGS += -mthumb -mabi=aapcs
-ASMFLAGS += -mfloat-abi=soft
 ASMFLAGS += -DFLOAT_ABI_SOFT
 ASMFLAGS += -DNRF52811_XXAA
 ASMFLAGS += -DNRFX_COREDEP_DELAY_US_LOOP_CYCLES=3
+ASMFLAGS += -mcpu=cortex-m4
+ASMFLAGS += -mfloat-abi=soft
+ASMFLAGS += -mthumb -mabi=aapcs
 
 # As well as linker flags.
 LDFLAGS += $(OPT)
-LDFLAGS += -mthumb -mabi=aapcs -L$(NRF_SDK_PATH)/modules/nrfx/mdk -T$(S1_SDK_PATH)/s1.ld
+LDFLAGS += --specs=nano.specs # Uses newlib in nano version
 LDFLAGS += -mcpu=cortex-m4
-LDFLAGS += -Wl,--gc-sections # let linker dump unused sections
-LDFLAGS += --specs=nano.specs # use newlib in nano version
-# LDFLAGS += -u _printf_float # required to print floats
+LDFLAGS += -mthumb -mabi=aapcs -L$(NRF_SDK_PATH)/modules/nrfx/mdk -T$(LINKER_FILE)
+LDFLAGS += -u _printf_float # This allows us to print floats with printf
+LDFLAGS += -Wl,--gc-sections # Let's the linker dump unused sections
 
 # Here we set the stack and heap.
 $(PROJECT_NAME): CFLAGS += -D__HEAP_SIZE=2048
@@ -152,9 +176,11 @@ $(foreach target, $(TARGETS), $(call define_target, $(target)))
 # Always recompile s1.c to include the latest date, time and version stamps.
 $(shell touch $(S1_SDK_PATH)/s1.c)
 
-# These are the standard build tasks. 
-# You can add more in your own Makefile.
-.PHONY: default flash erase reset clean nrf_sdk_config
+
+# Below are the standard build tasks. You can add more in your own Makefile.
+
+# This line tells make that "default", "flash", etc. aren't files, but recipes
+.PHONY: default flash erase reset clean
 
 # "make" simply builds the project
 default: $(PROJECT_NAME)
@@ -170,7 +196,3 @@ erase:
 # "make reset" will reset the nRF chip
 reset:
 	nrfjprog -f nrf52 -r
-
-# "make sdk_config" will open the nRF SDK configuration utility
-nrf_sdk_config:
-	java -jar $(NRF_SDK_PATH)/external_tools/cmsisconfig/CMSIS_Configuration_Wizard.jar sdk_config.h
