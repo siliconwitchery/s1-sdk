@@ -2,32 +2,25 @@
  * @file  s1.c
  * @brief S1 Module Core Functions
  *        
- *        Various functions to setup and configure the S1
- *        Module. To access these functions, use the s1.h
- *        header file.
+ *        Various functions to setup and configure the S1 Module. To access 
+ *        these functions, use the s1.h header file.
  * 
  * @attention Copyright 2021 Silicon Witchery AB
  *
- * Permission to use, copy, modify, and/or distribute this 
- * software for any purpose with or without fee is hereby
- * granted, provided that the above copyright notice and this
- * permission notice appear in all copies.
+ * Permission to use, copy, modify, and/or distribute this software for any 
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS
- * ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL 
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO 
- * EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT, 
- * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER 
- * RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN 
- * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, 
- * ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE 
- * OF THIS SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+ * REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY 
+ * AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT, 
+ * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM 
+ * LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+ * OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR 
+ * PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <stdbool.h>
-#include <stdint.h>
 #include <string.h>
-#include <math.h>
 
 #include "nrf_gpio.h"
 #include "nrfx_saadc.h"
@@ -39,6 +32,14 @@
 // Instances for I2C and SPI
 static const nrfx_spim_t spi = NRFX_SPIM_INSTANCE(0);
 static const nrfx_twim_t i2c = NRFX_TWIM_INSTANCE(0);
+
+// The PMIC control interface pins and I2C address
+#define PMIC_SDA_PIN NRF_GPIO_PIN_MAP(0, 14)
+#define PMIC_SCL_PIN NRF_GPIO_PIN_MAP(0, 17)
+#define PMIC_I2C_ADDRESS 0x48
+
+// ADC input for the battery monitor pin from the PMIC
+#define PMIC_AMUX_PIN NRF_SAADC_INPUT_AIN1
 
 static uint8_t pmic_read_reg(uint8_t reg)
 {
@@ -64,8 +65,8 @@ static void pmic_write_reg(uint8_t reg, uint8_t value)
     APP_ERROR_CHECK(nrfx_twim_xfer(&i2c, &i2c_xfer, 0));
 }
 
-void flash_tx_rx(uint8_t *tx_buffer, size_t tx_len,
-                 uint8_t *rx_buffer, size_t rx_len)
+s1_error_t flash_tx_rx(uint8_t *tx_buffer, size_t tx_len,
+                       uint8_t *rx_buffer, size_t rx_len)
 {
     // SPI hardware configuration
     nrfx_spim_config_t spi_config = NRFX_SPIM_DEFAULT_CONFIG;
@@ -81,94 +82,34 @@ void flash_tx_rx(uint8_t *tx_buffer, size_t tx_len,
                                                         rx_buffer, rx_len);
 
     APP_ERROR_CHECK(nrfx_spim_xfer(&spi, &spi_xfer, 0));
-}
 
-void s1_generic_spi_init(int nrf_spim_freq)
-{
-    // SPI hardware configuration
-    nrfx_spim_config_t spi_config = NRFX_SPIM_DEFAULT_CONFIG;
-    spi_config.mosi_pin = SPI_SO_PIN;
-    spi_config.miso_pin = SPI_SI_PIN;
-    spi_config.sck_pin = SPI_CLK_PIN;
-    spi_config.ss_pin = SPI_CS_PIN;
-
-    // TODO: Clean this bit up
-    if (nrf_spim_freq == NRF_SPIM_FREQ_125K)
-        spi_config.frequency = NRF_SPIM_FREQ_125K;
-    else if (nrf_spim_freq == NRF_SPIM_FREQ_250K)
-        spi_config.frequency = NRF_SPIM_FREQ_250K;
-    else if (nrf_spim_freq == NRF_SPIM_FREQ_500K)
-        spi_config.frequency = NRF_SPIM_FREQ_500K;
-    else if (nrf_spim_freq == NRF_SPIM_FREQ_1M)
-        spi_config.frequency = NRF_SPIM_FREQ_1M;
-    else if (nrf_spim_freq == NRF_SPIM_FREQ_2M)
-        spi_config.frequency = NRF_SPIM_FREQ_2M;
-    else if (nrf_spim_freq == NRF_SPIM_FREQ_4M)
-        spi_config.frequency = NRF_SPIM_FREQ_4M;
-    else // default 1M
-        spi_config.frequency = NRF_SPIM_FREQ_1M;
-
-    spi_config.ss_active_high = 1; // Inverted CS
-
-    // Initialise the SPI if it was not already
-    APP_ERROR_CHECK(nrfx_spim_init(&spi, &spi_config, NULL, NULL));
-}
-
-void s1_generic_spi_tx(uint8_t *tx_buffer, uint8_t len)
-{
-    nrfx_spim_xfer_desc_t spi_xfer = NRFX_SPIM_XFER_TX(tx_buffer, len);
-    APP_ERROR_CHECK(nrfx_spim_xfer(&spi, &spi_xfer, 0));
-}
-
-void s1_generic_spi_tx_rx(uint8_t *tx_buffer, uint8_t tx_len, uint8_t *rx_buffer, uint8_t rx_len)
-{
-    nrfx_spim_xfer_desc_t spi_xfer = NRFX_SPIM_XFER_TRX(tx_buffer, tx_len, rx_buffer, rx_len);
-    APP_ERROR_CHECK(nrfx_spim_xfer(&spi, &spi_xfer, 0));
-}
-
-void s1_fpga_io_init(s1_fpga_pins_t *s1_fpga_pins)
-{
-    s1_generic_spi_init(NRF_SPIM_FREQ_125K);
-    // TODO: make fpga pin function configurable
-}
-
-void s1_fpga_io_update(s1_fpga_pins_t *s1_fpga_pins)
-{
-    static uint8_t tx_buffer[2];
-    for (int i = 0; i < 8; i++)
-    {
-        tx_buffer[0] = i; // pin numbering starts at 1
-        tx_buffer[1] = s1_fpga_pins->duty_cycle[i];
-        s1_generic_spi_tx(tx_buffer, 2);
-        // LOG_RAW("%d %d ", tx_buffer[0], tx_buffer[1]);
-    }
-    // LOG_RAW("\r\n");
+    // TODO return error code for SPI errors
 }
 
 s1_error_t s1_pmic_set_vaux(float voltage)
 {
     // Check if voltage is a valid range
-    if (voltage < 0.8 || voltage > 5.5)
+    if (voltage < 0.8f || voltage > 5.5f)
     {
         return S1_INVALID_SETTING;
     }
 
     // If voltage > than 3.46, then LDO0 must not
     // be in LSW mode.
-    if (voltage > 3.46 && (pmic_read_reg(0x39) & 0x08))
+    if (voltage > 3.46f && (pmic_read_reg(0x39) & 0x08))
     {
         return S1_INVALID_SETTING;
     }
 
     // If 0V, we shutdown the SSB2
-    if (voltage == 0.0)
+    if (voltage == 0.0f)
     {
         pmic_write_reg(0x2E, 0x0C);
         return S1_SUCCESS;
     }
 
     // Set LDO target voltage
-    uint8_t voltage_setting = (voltage - 0.8) / 0.05;
+    uint8_t voltage_setting = (uint8_t)((voltage - 0.8f) / 0.05f);
     pmic_write_reg(0x2D, voltage_setting);
 
     // Enable SSB2
@@ -184,20 +125,20 @@ s1_error_t s1_pmic_set_vio(float voltage)
 {
     // Check if voltage is a valid range
     // 3.46V limit is to protect FPGA
-    if (voltage < 0.8 || voltage > 3.46)
+    if (voltage < 0.8f || voltage > 3.46f)
     {
         return S1_INVALID_SETTING;
     }
 
     // If 0V, we shutdown the LDO
-    if (voltage == 0.0)
+    if (voltage == 0.0f)
     {
         pmic_write_reg(0x39, 0x0C);
         return S1_SUCCESS;
     }
 
     // Set LDO target voltage
-    uint8_t voltage_setting = (voltage - 0.8) / 0.025;
+    uint8_t voltage_setting = (uint8_t)((voltage - 0.8f) / 0.025f);
     pmic_write_reg(0x38, voltage_setting);
 
     // Enable LDO0
@@ -294,13 +235,15 @@ s1_error_t s1_flash_page_from_image(uint32_t offset,
     // Write page comand with 24bit address
     // Lowest byte of address is always 0
     tx[0] = 0x02;
-    tx[1] = offset >> 16;
-    tx[2] = offset >> 8;
+    tx[1] = (uint8_t)(offset >> 16);
+    tx[2] = (uint8_t)(offset >> 8);
     tx[3] = 0x00; // Lower byte 0 to avoid partial pages
 
     // Copy page from image and transfer
     memcpy(tx + 4, image + offset, 256);
     flash_tx_rx((uint8_t *)&tx, 260, NULL, 0);
+
+    // TODO include return codes for SPI errors
 }
 
 void s1_fpga_hold_reset(void)

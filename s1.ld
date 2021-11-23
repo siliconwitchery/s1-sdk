@@ -1,4 +1,12 @@
-/* Linker script to configure memory regions. */
+/* 
+
+  Linker script for use with the S1 module without any softdevice. RAM and 
+  Flash are configured for a bare-bones application which is a rare use case.
+  You can however copy-paste this into your application code and change the RAM
+  and Flash values to your needs. In your Makefile, redirect to your new linker
+  file using the line: LINKER_FILE = my_linker_file.ld
+
+*/
 
 SEARCH_DIR(.)
 GROUP(-lgcc -lc -lnosys)

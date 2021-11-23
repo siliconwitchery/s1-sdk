@@ -1,22 +1,19 @@
- # Base SDK makefile.
+# Base SDK makefile.
 # ------------------
 #
 # Copyright 2021 Silicon Witchery AB
 #
-# Permission to use, copy, modify, and/or distribute this 
-# software for any purpose with or without fee is hereby
-# granted, provided that the above copyright notice and this
-# permission notice appear in all copies.
+# Permission to use, copy, modify, and/or distribute this software for any 
+# purpose with or without fee is hereby granted, provided that the above
+# copyright notice and this permission notice appear in all copies.
 #
-# THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS
-# ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL 
-# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO 
-# EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT, 
-# INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER 
-# RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN 
-# ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, 
-# ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE 
-# OF THIS SOFTWARE.
+# THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+# REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY 
+# AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT, 
+# INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM 
+# LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+# OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR 
+# PERFORMANCE OF THIS SOFTWARE.
 #
 # ------------------
 
@@ -34,13 +31,13 @@ S1_SDK_PATH ?= s1-sdk
 # Optionally, you can change the build directory.
 OUTPUT_DIRECTORY ?= .build
 
-# There's also a sim dicrectory which can be used for verilog testbench outputs
+# There's also a sim directory which can be used for verilog test bench outputs.
 SIM_DIRECTORY ?= .sim
 
 # If using a bluetooth stack, the linker file must be changed to one with
 # correct memory addresses for the bluetooth softdevice. Otherwise no bluetooth
-# stack memory will be allocated in this basic linker file.
-LINKER_FILE ?= $(S1_SDK_PATH)/linker-files/s1-basic-linker.ld
+# stack memory will be allocated using this basic linker file.
+LINKER_FILE ?= $(S1_SDK_PATH)/s1.ld
 
 # The GNU GCC prefix shouldn't change, but if you need to change it, you can
 GNU_PREFIX ?= arm-none-eabi
@@ -122,7 +119,7 @@ OPT ?= -std=gnu17 -pedantic -Os -g3 -fno-common -fstack-usage \
 
 # These are some sensible default C flags, but you can add more in your 
 # Makefile. If you're using a bluetooth stack, then you'll have to add a few
-# specific flags to configure the softdevice also.
+# specific flags to configure the softdevice.
 CFLAGS += $(OPT)
 CFLAGS += $(WARN)
 CFLAGS += -DAPP_TIMER_V2
