@@ -23,6 +23,7 @@
 #include <string.h>
 
 #include "nrf_gpio.h"
+#include "nrfx_gpiote.h"
 #include "nrfx_saadc.h"
 #include "nrfx_spim.h"
 #include "nrfx_twim.h"
@@ -32,6 +33,9 @@
 // Instances for I2C and SPI
 static const nrfx_spim_t spi = NRFX_SPIM_INSTANCE(0);
 static const nrfx_twim_t i2c = NRFX_TWIM_INSTANCE(0);
+
+// Interupt driven pending flag for when the FPGA_DONE_PIN goes high
+static bool fpga_done_flag_pending = false;
 
 // The PMIC control interface pins and I2C address
 #define PMIC_SDA_PIN NRF_GPIO_PIN_MAP(0, 14)
@@ -267,18 +271,34 @@ void s1_fpga_boot(void)
     nrf_gpio_pin_set(FPGA_RESET_PIN);
 }
 
+void fpga_done_pin_interrupt(nrfx_gpiote_pin_t pin, nrf_gpiote_polarity_t action)
+{
+    if (pin == FPGA_DONE_PIN && action == NRF_GPIOTE_POLARITY_LOTOHI)
+    {
+        fpga_done_flag_pending = true;
+    }
+}
+
 bool s1_fpga_is_booted(void)
 {
-    return (bool)nrf_gpio_pin_read(FPGA_DONE_PIN);
+    if (fpga_done_flag_pending)
+    {
+        fpga_done_flag_pending = false;
+        return true;
+    }
+    return false;
 }
 
 s1_error_t s1_init(void)
 {
-    // FPGA control pins configuration
-    // - reset pin as output (low signal holds FPGA in reset)
-    // - done pin as input (goes high when FPGA is configured)
+    // Configure FPGA reset pin as output (low signal holds FPGA in reset)
     nrf_gpio_cfg_output(FPGA_RESET_PIN);
-    nrf_gpio_cfg_input(FPGA_DONE_PIN, NRF_GPIO_PIN_PULLUP);
+
+    // Set up done pin as an interrupt. Goes high when configuration is done
+    nrfx_gpiote_in_config_t config = NRFX_GPIOTE_CONFIG_IN_SENSE_LOTOHI(true);
+    APP_ERROR_CHECK(nrfx_gpiote_init());
+    APP_ERROR_CHECK(nrfx_gpiote_in_init(FPGA_DONE_PIN, &config, fpga_done_pin_interrupt));
+    nrfx_gpiote_in_event_enable(FPGA_DONE_PIN, true);
 
     // I2C hardware configuration
     nrfx_twim_config_t pmic_twi_config = NRFX_TWIM_DEFAULT_CONFIG;

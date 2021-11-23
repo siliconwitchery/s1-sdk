@@ -68,6 +68,7 @@ SRC_FILES += \
   $(NRF_SDK_PATH)/external/segger_rtt/SEGGER_RTT_Syscalls_GCC.c \
   $(NRF_SDK_PATH)/external/segger_rtt/SEGGER_RTT.c \
   $(NRF_SDK_PATH)/modules/nrfx/drivers/src/nrfx_clock.c \
+  $(NRF_SDK_PATH)/modules/nrfx/drivers/src/nrfx_gpiote.c \
   $(NRF_SDK_PATH)/modules/nrfx/drivers/src/nrfx_saadc.c \
   $(NRF_SDK_PATH)/modules/nrfx/drivers/src/nrfx_spim.c \
   $(NRF_SDK_PATH)/modules/nrfx/drivers/src/nrfx_twim.c \
