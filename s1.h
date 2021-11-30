@@ -126,6 +126,8 @@ s1_error_t s1_pmic_set_vadc(float voltage);
  */
 void s1_pimc_fpga_vcore(bool enable);
 
+void pmic_enable_charging();
+
 /*******************************************************
  * Flash related APIs
  *******************************************************/

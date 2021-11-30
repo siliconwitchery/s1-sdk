@@ -69,6 +69,18 @@ static void pmic_write_reg(uint8_t reg, uint8_t value)
     APP_ERROR_CHECK(nrfx_twim_xfer(&i2c, &i2c_xfer, 0));
 }
 
+void pmic_enable_charging() {
+    // read ICHGIN_LIM_DEF, MSB in 0x2F
+    uint8_t buff = 0;
+    buff = pmic_read_reg(0x2F);
+    if (buff & 0x80) 
+        buff = 0b11110001;
+    else 
+        buff = 0b11100001;
+    // Vchgmin=4.7V, Ichgmax=97mA, CHGEN=1
+    pmic_write_reg(0x21, buff);
+}
+
 s1_error_t flash_tx_rx(uint8_t *tx_buffer, size_t tx_len,
                        uint8_t *rx_buffer, size_t rx_len)
 {
