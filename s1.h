@@ -75,6 +75,23 @@ s1_error_t s1_init(void);
  *******************************************************/
 
 /**
+ * @brief Sets the charger target voltage and constant current values. Note that
+ *        setting incorrect values may damage a connected battery and cause fire
+ *        or burns. It's important to check that this configuration matches the
+ *        real measured values once a battery is connected.
+ * 
+ * @param voltage: The battery max voltage. For Li-Po, this is typically 4.2V.
+ *                 Can be set between 3.6V and 4.6V in 0.025mV steps.
+ * 
+ * @param current: The charging current limit. This should typically be set
+ *                 to no more than 1 x the mAh capacity of the battery. Can be
+ *                 set between 7.5mA and 300mA in 7.5mA steps.
+ * 
+ * @returns S1 status if okay. Error otherwise.
+ */
+s1_error_t s1_pmic_set_chg(float voltage, float current);
+
+/**
  * @brief Set Vaux voltage. Can be set from 0.8V to 5.5V in 50mV steps. Will 
  *        return false if Vio is set to Load Switch mode, and Vaux is set to a
  *        value greater than 3.46V. This is to protect the FPGA.

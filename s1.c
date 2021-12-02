@@ -69,18 +69,6 @@ static void pmic_write_reg(uint8_t reg, uint8_t value)
     APP_ERROR_CHECK(nrfx_twim_xfer(&i2c, &i2c_xfer, 0));
 }
 
-void pmic_enable_charging() {
-    // read ICHGIN_LIM_DEF, MSB in 0x2F
-    uint8_t buff = 0;
-    buff = pmic_read_reg(0x2F);
-    if (buff & 0x80) 
-        buff = 0b11110001;
-    else 
-        buff = 0b11100001;
-    // Vchgmin=4.7V, Ichgmax=97mA, CHGEN=1
-    pmic_write_reg(0x21, buff);
-}
-
 s1_error_t flash_tx_rx(uint8_t *tx_buffer, size_t tx_len,
                        uint8_t *rx_buffer, size_t rx_len)
 {
@@ -100,6 +88,29 @@ s1_error_t flash_tx_rx(uint8_t *tx_buffer, size_t tx_len,
     APP_ERROR_CHECK(nrfx_spim_xfer(&spi, &spi_xfer, 0));
 
     // TODO return error code for SPI errors
+}
+
+s1_error_t s1_pmic_set_chg(float voltage, float current)
+{
+    // Check if voltage is a valid range
+    if (voltage < 3.6f || voltage > 4.6f)
+    {
+        return S1_INVALID_SETTING;
+    }
+
+    // Set charger target voltage
+    uint8_t voltage_setting = (uint8_t)((voltage - 3.6f) / 0.025f) << 2;
+    pmic_write_reg(0x26, voltage_setting | 0b00);
+
+    // Check if the current is a valid range
+    if (current < 7.5f || current > 300.0f)
+    {
+        return S1_INVALID_SETTING;
+    }
+
+    // Set charge constant current value and keep 3hr safety timer
+    uint8_t current_setting = (uint8_t)((current - 7.5f) / 7.5f) << 2;
+    pmic_write_reg(0x24, current_setting | 0b01);
 }
 
 s1_error_t s1_pmic_set_vaux(float voltage)
