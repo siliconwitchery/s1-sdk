@@ -319,6 +319,7 @@ s1_error_t s1_init(void)
 
     // Set up done pin as an interrupt. Goes high when configuration is done
     nrfx_gpiote_in_config_t config = NRFX_GPIOTE_CONFIG_IN_SENSE_LOTOHI(true);
+    config.pull = NRF_GPIO_PIN_PULLUP;
     APP_ERROR_CHECK(nrfx_gpiote_init());
     APP_ERROR_CHECK(nrfx_gpiote_in_init(FPGA_DONE_PIN, &config, fpga_done_pin_interrupt));
     nrfx_gpiote_in_event_enable(FPGA_DONE_PIN, true);
