@@ -1,7 +1,7 @@
-# Base SDK makefile.
-# ------------------
 #
-# Copyright 2021 Silicon Witchery AB
+# Base SDK makefile.
+#
+# Copyright 2022 Silicon Witchery AB
 #
 # Permission to use, copy, modify, and/or distribute this software for any 
 # purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,6 @@
 # OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR 
 # PERFORMANCE OF THIS SOFTWARE.
 #
-# ------------------
 
 
 # You don't need to change anything here, but include this file in your own
