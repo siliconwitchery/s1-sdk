@@ -3,3 +3,6 @@
 
 # VSCode files
 .vscode
+
+# Build folder
+.build
