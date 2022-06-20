@@ -34,7 +34,7 @@ Most of these tools are available from standard package managers, but you can bu
 
 We've designed this SDK so you can add it as a sub-module into your own git projects. The files here are therefore very lightweight and designed to be easy to use.
 
-- `s1.mk` - This is the core makefile that ensures that the nRF code can be built. You should call it with your own `Makefile` where you specify your applications files and any other settings you may want.
+- `Makefile` - This is the core makefile that ensures that the nRF code can be built. You should call it with your own `Makefile` where you specify your applications files and any other settings you may want.
 
 - `s1.c` - These are the core functions that run on the nRF chip. Access them via `s1.h`
 
@@ -43,6 +43,8 @@ We've designed this SDK so you can add it as a sub-module into your own git proj
 - `s1.ld` - This is the linker file which determines the memory layout within the nRF chip when the code is built.
 
 - `s1.pcf` - The FPGA pin configuration resides here. The names of the pins correspond to the pins of the FPGA, where `Dx` are the exposed pins, and the remaining pins are internal to the module.
+
+- `s1_tests` - This folder includes a test application which the SDK is tested against on every release. Run this application on your module to check it's correctly functional. Note that it sets many different voltages on the Vio and Vaux lines, which may damage external circuitry. It's best run on a bare Popout board without any additional devices connected. To build the test application, run `make S1_TEST=1 NRF_SDK_PATH=...` directly from the SDK folder.
 
 That's it! Again in order to use these files, it's better to look at an example project, and copy that layout for your own application.
 

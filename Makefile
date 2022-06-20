@@ -1,7 +1,7 @@
-# Base SDK makefile.
-# ------------------
 #
-# Copyright 2021 Silicon Witchery AB
+# Base SDK makefile.
+#
+# Copyright 2022 Silicon Witchery AB
 #
 # Permission to use, copy, modify, and/or distribute this software for any 
 # purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,6 @@
 # OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR 
 # PERFORMANCE OF THIS SOFTWARE.
 #
-# ------------------
 
 
 # You don't need to change anything here, but include this file in your own
@@ -26,7 +25,7 @@
 # As a minimum, you only need to set these variables from you Makefile.
 PROJECT_NAME ?= s1_sdk_standalone
 NRF_SDK_PATH ?= ${HOME}/nRF5_SDK
-S1_SDK_PATH ?= s1-sdk
+S1_SDK_PATH ?= .
 
 # Optionally, you can change the build directory.
 OUTPUT_DIRECTORY ?= .build
@@ -104,6 +103,12 @@ INC_FOLDERS += \
   $(NRF_SDK_PATH)/modules/nrfx/drivers/include \
   $(NRF_SDK_PATH)/modules/nrfx/hal \
   $(NRF_SDK_PATH)/modules/nrfx/mdk \
+
+# If S1_TEST=1 is passed to the makefile, include the test main.c and config
+ifeq ($(S1_TEST), 1)
+  SRC_FILES += $(S1_SDK_PATH)/s1_tests/s1_tests.c
+  INC_FOLDERS += $(S1_SDK_PATH)/s1_tests
+endif
 
 # Libraries can also be added.
 LIB_FILES += \
