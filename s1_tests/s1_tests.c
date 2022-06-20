@@ -245,8 +245,8 @@ int main(void)
     float vaux;
     err = s1_pmic_get_vaux(&vaux);
     LOG_FAIL(err != S1_SUCCESS, "s1_pmic_get_vaux() returned the error code %d", err);
-    LOG_FAIL(vaux != 3.0f, "Vio did not round down correctly. Vio = %f", (double)vaux);
-    LOG_PASS(vaux == 3.0f, "Vio correctly rounded down to 3.0V");
+    LOG_FAIL(vaux != 3.0f, "Vaux did not round down correctly. Vio = %f", (double)vaux);
+    LOG_PASS(vaux == 3.0f, "Vaux correctly rounded down to 3.0V");
 
     err = s1_pmic_set_vaux(3.03f);
     LOG_FAIL(err != S1_SUCCESS, "s1_pmic_set_vaux() returned the error code %d", err);
