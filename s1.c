@@ -73,12 +73,22 @@ static s1_error_t pmic_read_reg(uint8_t reg, uint8_t *data)
     // Initiate the transfer
     nrfx_err_t err = nrfx_twim_xfer(&i2c, &i2c_xfer, 0);
 
+    // Wait until the transfer is complete
+    while (nrfx_twim_is_busy(&i2c))
+    {
+    }
+
     // If an error occurs, try again after 100us. This can be needed if the
     // PMIC is under load, and the power fluctuates
     if (err != NRFX_SUCCESS)
     {
         NRFX_DELAY_US(100);
         err = nrfx_twim_xfer(&i2c, &i2c_xfer, 0);
+
+        // Wait until the transfer is complete
+        while (nrfx_twim_is_busy(&i2c))
+        {
+        }
 
         // If another error occurs, return a communication error
         if (err != NRFX_SUCCESS)
@@ -114,6 +124,11 @@ static s1_error_t pmic_write_reg(uint8_t reg, uint8_t data)
 
     // Initiate the transfer
     nrfx_err_t err = nrfx_twim_xfer(&i2c, &i2c_xfer, 0);
+
+    // Wait until the transfer is complete
+    while (nrfx_twim_is_busy(&i2c))
+    {
+    }
 
     // If an error occurs, return a communication error
     if (err != NRFX_SUCCESS)
@@ -454,23 +469,8 @@ s1_error_t s1_pmic_get_vio(float *voltage, bool *lsw_mode)
 {
     uint8_t reg_value;
 
-    // Read SBB2
-    s1_error_t err = pmic_read_reg(0x2E, &reg_value);
-
-    // If an error occurs, return it
-    if (err != S1_SUCCESS)
-    {
-        return err;
-    }
-
-    // If SBB2 is disabled, notify the user
-    if ((reg_value & 0b110) != 0b110)
-    {
-        return S1_PMIC_VAUX_NOT_ENABLED;
-    }
-
     // Read the LSW/LDO mode
-    err = pmic_read_reg(0x39, &reg_value);
+    s1_error_t err = pmic_read_reg(0x39, &reg_value);
 
     // If an error occurs, return it
     if (err != S1_SUCCESS)
@@ -489,6 +489,21 @@ s1_error_t s1_pmic_get_vio(float *voltage, bool *lsw_mode)
         {
             // Set voltage to true
             *voltage = 1.0f;
+
+            // Read SBB2 active register
+            err = pmic_read_reg(0x2E, &reg_value);
+
+            // If an error occurs, return it
+            if (err != S1_SUCCESS)
+            {
+                return err;
+            }
+
+            // If SBB2 is disabled, notify the user
+            if ((reg_value & 0b110) != 0b110)
+            {
+                return S1_PMIC_VAUX_NOT_ENABLED;
+            }
 
             // Return success
             return S1_SUCCESS;
@@ -538,6 +553,21 @@ s1_error_t s1_pmic_get_vio(float *voltage, bool *lsw_mode)
             return S1_PMIC_VAUX_TOO_LOW;
         }
 
+        // Read SBB2 active register
+        err = pmic_read_reg(0x2E, &reg_value);
+
+        // If an error occurs, return it
+        if (err != S1_SUCCESS)
+        {
+            return err;
+        }
+
+        // If SBB2 is disabled, notify the user
+        if ((reg_value & 0b110) != 0b110)
+        {
+            return S1_PMIC_VAUX_NOT_ENABLED;
+        }
+
         // Return success once read
         return S1_SUCCESS;
     }
@@ -553,23 +583,8 @@ s1_error_t s1_pmic_set_vio(float voltage, bool lsw_mode)
 {
     uint8_t reg_value;
 
-    // Read SBB2
-    s1_error_t err = pmic_read_reg(0x2E, &reg_value);
-
-    // If an error occurs, return it
-    if (err != S1_SUCCESS)
-    {
-        return err;
-    }
-
-    // If SBB2 is disabled, notify the user
-    if ((reg_value & 0b110) != 0b110)
-    {
-        return S1_PMIC_VAUX_NOT_ENABLED;
-    }
-
     // Read the SBB1 register
-    err = pmic_read_reg(0x2C, &reg_value);
+    s1_error_t err = pmic_read_reg(0x2C, &reg_value);
 
     // If an error occurs, return it
     if (err != S1_SUCCESS)
@@ -587,7 +602,7 @@ s1_error_t s1_pmic_set_vio(float voltage, bool lsw_mode)
     // If the lsw flag was provided
     if (lsw_mode)
     {
-        // Read SBB2
+        // Read SBB2 set voltage
         err = pmic_read_reg(0x2D, &reg_value);
 
         // If an error occurs, return it
@@ -654,6 +669,24 @@ s1_error_t s1_pmic_set_vio(float voltage, bool lsw_mode)
         return S1_PMIC_INVALID_VALUE;
     }
 
+    // Set the output voltage
+    err = pmic_write_reg(0x38, (uint8_t)round((voltage - 0.8f) / 0.025f));
+
+    // If an error occurs, return it
+    if (err != S1_SUCCESS)
+    {
+        return err;
+    }
+
+    // Turn on the regulator with LDO mode set, and discharge enabled
+    err = pmic_write_reg(0x39, 0x0E);
+
+    // If an error occurs, return it
+    if (err != S1_SUCCESS)
+    {
+        return err;
+    }
+
     // Otherwise, check SBB2 (Vaux) set voltage
     err = pmic_read_reg(0x2D, &reg_value);
 
@@ -673,8 +706,8 @@ s1_error_t s1_pmic_set_vio(float voltage, bool lsw_mode)
         return S1_PMIC_VAUX_TOO_LOW;
     }
 
-    // Set the output voltage
-    err = pmic_write_reg(0x38, (uint8_t)round((voltage - 0.8f) / 0.025f));
+    // Read SBB2 active register
+    err = pmic_read_reg(0x2E, &reg_value);
 
     // If an error occurs, return it
     if (err != S1_SUCCESS)
@@ -682,13 +715,10 @@ s1_error_t s1_pmic_set_vio(float voltage, bool lsw_mode)
         return err;
     }
 
-    // Turn on the regulator with LDO mode set, and discharge enabled
-    err = pmic_write_reg(0x39, 0x0E);
-
-    // If an error occurs, return it
-    if (err != S1_SUCCESS)
+    // If SBB2 is disabled, notify the user
+    if ((reg_value & 0b110) != 0b110)
     {
-        return err;
+        return S1_PMIC_VAUX_NOT_ENABLED;
     }
 
     // Return success once complete

@@ -74,6 +74,15 @@ int main(void)
     LOG_PASS(err == S1_SUCCESS, "S1 started");
     LOG_FAIL(err != S1_SUCCESS, "S1 init error. Code: %d", err);
 
+    // Set the rails to default values
+    LOG("[INFO] Setting all rails to default values");
+    err = s1_pmic_set_vaux(3.55f);
+    LOG_FAIL(err != S1_SUCCESS, "s1_pmic_set_vaux() returned the error code %d", err);
+    err = s1_pmic_set_vio(3.0f, false);
+    LOG_FAIL(err != S1_SUCCESS, "s1_pmic_set_vio() returned the error code %d", err);
+    err = s1_pimc_set_vfpga(false);
+    LOG_FAIL(err != S1_SUCCESS, "s1_pimc_set_vfpga() returned the error code %d", err);
+
     // Enable Vio and Vfpga to their nominal voltages
     LOG("[INFO] Enabling Vfpga and Vio to their nominal voltages");
     err = s1_pimc_set_vfpga(true);
@@ -118,6 +127,133 @@ int main(void)
     LOG_PASS(err == S1_PMIC_VFPGA_NOT_ENABLED, "Vio correctly refused to turn on in LSW mode");
 
     // Enable Vfpga again, and attempt to set Vio out of normal ranges
+    LOG("[INFO] Enabling Vfpga for Vio range tests");
+    err = s1_pimc_set_vfpga(true);
+    LOG_FAIL(err != S1_SUCCESS, "s1_pimc_set_vfpga() returned the error code %d", err);
+
+    err = s1_pmic_set_vio(0.7f, false);
+    LOG_FAIL(err != S1_PMIC_INVALID_VALUE, "Vio incorrectly set below 0.8V");
+    LOG_PASS(err == S1_PMIC_INVALID_VALUE, "Vio correctly refused to set below 0.8V");
+
+    err = s1_pmic_set_vio(0.8f, false);
+    LOG_FAIL(err != S1_SUCCESS, "s1_pmic_set_vio() returned the error code %d", err);
+    LOG_PASS(err == S1_SUCCESS, "Vio correctly set to 0.8V");
+
+    err = s1_pmic_set_vio(3.475f, false);
+    LOG_FAIL(err != S1_PMIC_INVALID_VALUE, "Vio incorrectly set above 3.45V");
+    LOG_PASS(err == S1_PMIC_INVALID_VALUE, "Vio correctly refused to set above 3.45V");
+
+    err = s1_pmic_set_vio(3.45f, false);
+    LOG_FAIL(err != S1_SUCCESS, "s1_pmic_set_vio() returned the error code %d", err);
+    LOG_PASS(err == S1_SUCCESS, "Vio correctly set to 3.45V");
+
+    // Test correct rounding of passed parameters for Vio
+    LOG("[INFO] Testing correct rounding of Vio voltage parameters");
+    err = s1_pmic_set_vio(3.01f, false);
+    LOG_FAIL(err != S1_SUCCESS, "s1_pmic_set_vio() returned the error code %d", err);
+    err = s1_pmic_get_vio(&vio, &lsw_mode);
+    LOG_FAIL(err != S1_SUCCESS, "s1_pmic_get_vio() returned the error code %d", err);
+    LOG_FAIL(vio != 3.0f, "Vio did not round down correctly. Vio = %f", (double)vio);
+    LOG_PASS(vio == 3.0f, "Vio correctly rounded down to 3.0V");
+
+    err = s1_pmic_set_vio(3.02f, false);
+    LOG_FAIL(err != S1_SUCCESS, "s1_pmic_set_vio() returned the error code %d", err);
+    err = s1_pmic_get_vio(&vio, &lsw_mode);
+    LOG_FAIL(err != S1_SUCCESS, "s1_pmic_get_vio() returned the error code %d", err);
+    LOG_FAIL(vio != 3.025f, "Vio did not round up correctly. Vio = %f", (double)vio);
+    LOG_PASS(vio == 3.025f, "Vio correctly rounded up to 3.025V");
+
+    // Test Vio warning when Vaux is not in a suitable range
+    LOG("[INFO] Testing Vio configuration when Vaux is disabled");
+    err = s1_pmic_set_vaux(0.0f);
+    LOG_FAIL(err != S1_SUCCESS, "s1_pmic_set_vaux() returned the error code %d", err);
+    LOG_PASS(err == S1_SUCCESS, "Vaux correctly shutdown");
+
+    err = s1_pmic_set_vio(1.0f, false);
+    LOG_FAIL(err != S1_PMIC_VAUX_NOT_ENABLED, "Vio configured incorrectly while Vaux is disabled");
+    LOG_PASS(err == S1_PMIC_VAUX_NOT_ENABLED, "Vio correctly returned that Vaux is not enabled");
+
+    err = s1_pmic_get_vio(&vio, &lsw_mode);
+    LOG_FAIL(err != S1_PMIC_VAUX_NOT_ENABLED, "s1_pmic_get_vio() returned the error code %d", err);
+    LOG_FAIL(vio != 1.0f, "Vio did not configure to 1.0V anyway. Vio = %f", (double)vio);
+    LOG_PASS(vio == 1.0f, "Vio correctly configured to 1.0V anyway");
+
+    err = s1_pmic_set_vaux(3.0f);
+    LOG_FAIL(err != S1_SUCCESS, "s1_pmic_set_vaux() returned the error code %d", err);
+    LOG_PASS(err == S1_SUCCESS, "Vaux set to 3.0V");
+
+    err = s1_pmic_set_vio(2.925f, false);
+    LOG_FAIL(err != S1_PMIC_VAUX_TOO_LOW, "Vio incorrectly configured to above the LDO dropout threshold. Error = %d", err);
+    LOG_PASS(err == S1_PMIC_VAUX_TOO_LOW, "Vio correctly returned dropout level warning");
+
+    err = s1_pmic_get_vio(&vio, &lsw_mode);
+    LOG_FAIL(vio != 2.925f, "Vio did not configure to 2.925V anyway. Vio = %f", (double)vio);
+    LOG_PASS(vio == 2.925f, "Vio correctly configured to 2.925V anyway");
+
+    // Check load switch modes for Vio
+    LOG("[INFO] Testing Vio load switch modes");
+    err = s1_pmic_set_vio(0.0f, true);
+    LOG_FAIL(err != S1_SUCCESS, "s1_pmic_set_vio() returned the error code %d", err);
+    err = s1_pmic_get_vio(&vio, &lsw_mode);
+    LOG_FAIL(err != S1_SUCCESS, "s1_pmic_set_vio() returned the error code %d", err);
+    LOG_FAIL(vio != 0.0f || lsw_mode != true, "Vio as load switch (off) not correctly set");
+    LOG_PASS(vio == 0.0f && lsw_mode == true, "Vio as load switch (off) correctly set");
+
+    err = s1_pmic_set_vio(1.0f, true);
+    LOG_FAIL(err != S1_SUCCESS, "s1_pmic_set_vio() returned the error code %d", err);
+    err = s1_pmic_get_vio(&vio, &lsw_mode);
+    LOG_FAIL(err != S1_SUCCESS, "s1_pmic_set_vio() returned the error code %d", err);
+    LOG_FAIL(vio != 1.0f || lsw_mode != true, "Vio as load switch (on) not correctly set");
+    LOG_PASS(vio == 1.0f && lsw_mode == true, "Vio as load switch (on) correctly set");
+
+    err = s1_pmic_set_vaux(3.5f);
+    LOG_FAIL(err != S1_PMIC_INVALID_VALUE, "Vaux incorrectly set to a high voltage while Vio is in load switch mode");
+    LOG_PASS(err == S1_PMIC_INVALID_VALUE, "Vaux correctly refused to set to a high voltage while Vio is in load switch mode");
+
+    err = s1_pmic_set_vio(0.0f, false);
+    LOG_FAIL(err != S1_SUCCESS, "s1_pmic_set_vio() returned the error code %d", err);
+    err = s1_pmic_set_vaux(3.5f);
+    LOG_FAIL(err != S1_SUCCESS, "s1_pmic_set_vaux() returned the error code %d", err);
+    err = s1_pmic_set_vio(0.0f, true);
+    LOG_FAIL(err != S1_PMIC_VAUX_TOO_HIGH, "Vio incorrectly set to load switch mode while Vaux is too high");
+    LOG_PASS(err == S1_PMIC_VAUX_TOO_HIGH, "Vio correctly refused to set to load switch mode while Vaux is too high");
+
+    // Test Vaux ranges
+    LOG("[INFO] Testing Vaux range limits");
+    err = s1_pmic_set_vaux(0.75f);
+    LOG_FAIL(err != S1_PMIC_INVALID_VALUE, "Vaux incorrectly set below 0.8V");
+    LOG_PASS(err == S1_PMIC_INVALID_VALUE, "Vaux correctly refused to set below 0.8V");
+
+    err = s1_pmic_set_vaux(0.8f);
+    LOG_FAIL(err != S1_SUCCESS, "s1_pmic_set_vaux() returned the error code %d", err);
+    LOG_PASS(err == S1_SUCCESS, "Vaux correctly set to 0.8V");
+
+    err = s1_pmic_set_vio(0.0f, false);
+    LOG_FAIL(err != S1_SUCCESS, "s1_pmic_set_vio() returned the error code %d", err);
+    err = s1_pmic_set_vaux(5.55f);
+    LOG_FAIL(err != S1_PMIC_INVALID_VALUE, "Vaux incorrectly set above 5.5V");
+    LOG_PASS(err == S1_PMIC_INVALID_VALUE, "Vaux correctly refused to set below 5.5V");
+
+    err = s1_pmic_set_vaux(5.5f);
+    LOG_FAIL(err != S1_SUCCESS, "s1_pmic_set_vaux() returned the error code %d", err);
+    LOG_PASS(err == S1_SUCCESS, "Vaux correctly set to 5.5V");
+
+    // Test correct rounding of passed parameters for Vaux
+    LOG("[INFO] Testing correct rounding of Vaux voltage parameters");
+    err = s1_pmic_set_vaux(3.02f);
+    LOG_FAIL(err != S1_SUCCESS, "s1_pmic_set_aux() returned the error code %d", err);
+    float vaux;
+    err = s1_pmic_get_vaux(&vaux);
+    LOG_FAIL(err != S1_SUCCESS, "s1_pmic_get_vaux() returned the error code %d", err);
+    LOG_FAIL(vaux != 3.0f, "Vio did not round down correctly. Vio = %f", (double)vaux);
+    LOG_PASS(vaux == 3.0f, "Vio correctly rounded down to 3.0V");
+
+    err = s1_pmic_set_vaux(3.03f);
+    LOG_FAIL(err != S1_SUCCESS, "s1_pmic_set_vaux() returned the error code %d", err);
+    err = s1_pmic_get_vaux(&vaux);
+    LOG_FAIL(err != S1_SUCCESS, "s1_pmic_get_vaux() returned the error code %d", err);
+    LOG_FAIL(vaux != 3.05f, "Vaux did not round up correctly. Vio = %f", (double)vaux);
+    LOG_PASS(vaux == 3.05f, "Vaux correctly rounded up to 3.05V");
 
     return 0;
 }
